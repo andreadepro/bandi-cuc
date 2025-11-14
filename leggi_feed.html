@@ -521,15 +521,19 @@
                 <div class="category-section">
                     <span class="category-label">Categorie merceologiche:</span>
                     <div class="category-pills">
-                        <!-- Nuove categorie tematiche - Aggiunta classe merceologica-pill -->
-                        <button type="button" class="category-pill merceologica-pill" data-cat="sanit">Sanità</button>
-                        <button type="button" class="category-pill merceologica-pill" data-cat="scuola">Scuola</button>
-                        <button type="button" class="category-pill merceologica-pill" data-cat="informatica">Informatica</button>
-                        <button type="button" class="category-pill merceologica-pill" data-cat="ambiente">Ambiente</button>
-                        <button type="button" class="category-pill merceologica-pill" data-cat="sociale">Sociale</button>
-                        <button type="button" class="category-pill merceologica-pill" data-cat="cultura">Cultura</button>
-                        <button type="button" class="category-pill merceologica-pill" data-cat="trasporti">Trasporti</button>
-                        <button type="button" class="category-pill merceologica-pill" data-cat="energia">Energia</button>
+                        <!-- NUOVE categorie dal CSV -->
+                        <button type="button" class="category-pill merceologica-pill" data-cat="ict">ICT e Digitalizzazione</button>
+                        <button type="button" class="category-pill merceologica-pill" data-cat="generali">Beni e Servizi Generali</button>
+                        <button type="button" class="category-pill merceologica-pill" data-cat="sanita_dispositivi">Sanità - Dispositivi e Farmaci</button>
+                        <button type="button" class="category-pill merceologica-pill" data-cat="sanita_servizi">Sanità - Servizi Specialistici</button>
+                        <button type="button" class="category-pill merceologica-pill" data-cat="energia">Energia, Combustibili e Utilities</button>
+                        <button type="button" class="category-pill merceologica-pill" data-cat="efficienza">Efficienza Energetica e Sostenibilità</button>
+                        <button type="button" class="category-pill merceologica-pill" data-cat="facility">Facility Management</button>
+                        <button type="button" class="category-pill merceologica-pill" data-cat="trasporti">Veicoli, Mobilità e Trasporti</button>
+                        <button type="button" class="category-pill merceologica-pill" data-cat="consulenza">Servizi Professionali e di Consulenza</button>
+                        <button type="button" class="category-pill merceologica-pill" data-cat="cultura">Patrimonio Culturale</button>
+                        <button type="button" class="category-pill merceologica-pill" data-cat="ristorazione">Ristorazione Collettiva</button>
+                        <button type="button" class="category-pill merceologica-pill" data-cat="sicurezza">Sicurezza e Vigilanza</button>
                     </div>
                 </div>
             </div>
@@ -776,15 +780,20 @@
         };
 
         // --- SINONIMI PER CATEGORIE ---
+        // MODIFICATO: Dizionario aggiornato in base al file CSV
         const categorySynonyms = {
-            'informatica': ['software', 'hardware', 'digitale', 'pc', 'computer', 'server', 'rete', 'web', 'sito', 'app', 'cloud', 'ict', 'telefonia', 'dati'],
-            'ambiente': ['rifiuti', 'verde', 'bonifica', 'ecologico', 'ambientale', 'idrico', 'fognatura', 'discarica', 'parchi', 'giardini', 'raccolta', 'differenziata', 'pulizia'],
-            'sociale': ['assistenza', 'anziani', 'minori', 'disabili', 'sociale', 'socio', 'accoglienza', 'educativo', 'integrazione', 'domiciliare'],
-            'cultura': ['museo', 'biblioteca', 'teatro', 'evento', 'mostra', 'artistico', 'restauro', 'turismo', 'culturale', 'spettacolo', 'cinema', 'convegno', 'promozione'],
-            'trasporti': ['trasporto', 'scuolabus', 'veicoli', 'noleggio', 'bus', 'navetta', 'stradale', 'viabilità', 'parcheggio'],
-            'energia': ['elettrica', 'gas', 'metano', 'energetico', 'calore', 'illuminazione', 'led', 'fotovoltaico', 'efficientamento', 'termico'],
-            'sanit': ['sanitario', 'ospedale', 'medico', 'infermieristico', 'farmaci', 'ausili', 'clinico', 'ambulatorio', 'socio-sanitario', 'riabilitazione', 'usl', 'asl', 'azienda ospedaliera', 'distretto', 'consultorio'],
-            'scuola': ['scuola', 'didattico', 'istruzione', 'alunni', 'mensa', 'formazione', 'nido', 'materna', 'elementare', 'media', 'superiore', 'università', 'scolastico']
+            'ict': ['software', 'hardware', 'digitale', 'pc', 'computer', 'server', 'rete', 'web', 'sito', 'app', 'cloud', 'ict', 'telefonia', 'dati', 'digitalizzazione', 'connettività'],
+            'generali': ['cancelleria', 'arredi', 'pulizia', 'logistica', 'archivio', 'postali', 'copisteria', 'materiali consumo', 'beni', 'amministrativi', 'ufficio'],
+            'sanita_dispositivi': ['farmaci', 'vaccini', 'dispositivi medici', 'presidi', 'biomedicali', 'diagnostici', 'protesi', 'stent', 'guanti', 'siringhe'],
+            'sanita_servizi': ['manutenzione apparecchiature', 'diagnostica', 'lavanolo', 'gestione ospedaliera', 'usl', 'asl', 'socio-sanitario', 'assistenza sanitaria', 'servizi sanitari'],
+            'energia': ['energia elettrica', 'gas', 'carburanti', 'combustibili', 'utilities', 'metano', 'gpl', 'fornitura energia'],
+            'efficienza': ['efficientamento', 'illuminazione', 'led', 'cappotto termico', 'fotovoltaico', 'sostenibilità', 'consumi', 'esco', 'riqualificazione energetica'],
+            'facility': ['pulizia', 'manutenzione ordinaria', 'giardinaggio', 'portierato', 'reception', 'facility management', 'guardiania', 'global service', 'immobili'],
+            'trasporti': ['veicoli', 'noleggio', 'acquisto auto', 'pneumatici', 'flotte', 'manutenzione veicoli', 'trasporto pubblico', 'scuolabus', 'mobilità'],
+            'consulenza': ['professionali', 'consulenza', 'legale', 'fiscale', 'formazione', 'supporto tecnico', 'amministrativo', 'progettazione', 'incarico professionale'],
+            'cultura': ['restauro', 'conservazione', 'musei', 'archivi', 'biblioteche', 'evento culturale', 'patrimonio culturale', 'turismo', 'beni culturali', 'spettacolo'],
+            'ristorazione': ['ristorazione', 'catering', 'mense', 'pasti', 'viveri', 'derrate alimentari', 'refezione'],
+            'sicurezza': ['vigilanza', 'guardiania', 'sicurezza', 'antincendio', 'videosorveglianza', 'portierato armato']
         };
         
         // --- NUOVA FUNZIONE PER POPOLARE I MENU A TENDINA DEGLI ENTI ---
