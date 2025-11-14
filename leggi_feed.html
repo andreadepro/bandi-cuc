@@ -51,7 +51,16 @@
             border-radius: 10px;
             border: 1px solid var(--border-color);
         }
-        .category-section { margin-bottom: 25px; }
+        /* NUOVO WRAPPER PER LE CATEGORIE */
+        .category-wrapper {
+            margin-bottom: 25px; /* Spazio dopo l'intero blocco filtri */
+        }
+        .category-section { 
+            margin-bottom: 15px; /* Spazio tra i due gruppi di categorie */
+        }
+        .category-section:last-child {
+            margin-bottom: 0; /* Rimuovi spazio extra */
+        }
         .category-label {
             display: block;
             margin-bottom: 12px;
@@ -82,10 +91,22 @@
         }
         #search-fields {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            /* Modificato per 2 campi sulla prima riga */
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
             gap: 20px;
             margin-bottom: 25px;
         }
+        /* NUOVO CSS PER I WRAPPER DEI CAMPI */
+        .ente-fields-wrapper,
+        .range-fields-wrapper { /* AGGIUNTO */
+            /* Occupa l'intera larghezza della griglia principale */
+            grid-column: 1 / -1; 
+            display: grid;
+            /* Due colonne per i menu a tendina */
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
         .form-group { display: flex; flex-direction: column; }
         .form-group label {
             margin-bottom: 8px;
@@ -93,18 +114,38 @@
             font-size: 0.9rem;
             color: #495057;
         }
-        .form-group input {
+        /* Stile unificato per input e select */
+        .form-group input, .form-group select {
             padding: 12px;
             border: 1px solid #ced4da;
             border-radius: 6px;
             font-size: 1rem;
             transition: border-color 0.2s;
+            background-color: #fff;
+            height: 48px; /* Altezza fissa per allineamento */
+            box-sizing: border-box; /* Include padding nell'altezza */
+            width: 100%; /* Assicura che riempiano il contenitore grid */
         }
-        .form-group input:focus {
+        /* Stile per il <select> per farlo assomigliare all'input */
+        .form-group select {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 0.75rem center;
+            background-size: 16px 12px;
+        }
+        .form-group input:focus, .form-group select:focus {
             outline: none;
             border-color: var(--primary-color);
             box-shadow: 0 0 0 3px rgba(0, 86, 179, 0.1);
         }
+        /* Correzione per input tipo 'date' */
+        .form-group input[type="date"] {
+            padding-right: 0.75rem; /* Rimuovi padding extra su input date */
+        }
+        
         #controls-container {
             display: flex;
             gap: 20px;
@@ -130,9 +171,10 @@
         #controls-container button[type="submit"]:active { transform: translateY(1px); }
 
         /* --- Logica per nascondere i filtri nel tab "Cerca Esito" --- */
-        #search-form.esito-mode .category-section,
+        #search-form.esito-mode .category-wrapper, /* Modificato */
         #search-form.esito-mode #oggetto-input-group,
-        #search-form.esito-mode #ente-input-group,
+        #search-form.esito-mode .ente-fields-wrapper, /* CORRETTO */
+        #search-form.esito-mode .range-fields-wrapper, /* AGGIUNTO */
         #search-form.esito-mode #num-results-group {
             display: none;
         }
@@ -446,6 +488,8 @@
         @media (max-width: 768px) {
             .tabs { flex-direction: column; }
             .tab-link { font-size: 0.9rem; padding: 12px 10px;}
+            #search-fields { grid-template-columns: 1fr; } /* Campi di ricerca in colonna */
+            .ente-fields-wrapper, .range-fields-wrapper { grid-template-columns: 1fr; } /* Anche i wrapper in colonna */
             .synthetic-header { flex-direction: column; }
             .synthetic-badges { align-items: flex-start; margin-top: 15px; flex-direction: row; }
             .full-card dl { grid-template-columns: 1fr; }
@@ -463,22 +507,30 @@
         <h1>INVA - Bandi PlaCe-VdA</h1>
         <form id="search-form">
             
-            <div class="category-section">
-                <span class="category-label">Filtra per categoria:</span>
-                <div class="category-pills">
-                    <!-- Categorie principali (contratti) -->
-                    <button type="button" class="category-pill" data-cat="lavori">Lavori</button>
-                    <button type="button" class="category-pill" data-cat="servizi">Servizi</button>
-                    <button type="button" class="category-pill" data-cat="forniture">Forniture</button>
-                    <!-- Nuove categorie tematiche -->
-                    <button type="button" class="category-pill" data-cat="sanit">Sanità</button>
-                    <button type="button" class="category-pill" data-cat="scuola">Scuola</button>
-                    <button type="button" class="category-pill" data-cat="informatica">Informatica</button>
-                    <button type="button" class="category-pill" data-cat="ambiente">Ambiente</button>
-                    <button type="button" class="category-pill" data-cat="sociale">Sociale</button>
-                    <button type="button" class="category-pill" data-cat="cultura">Cultura</button>
-                    <button type="button" class="category-pill" data-cat="trasporti">Trasporti</button>
-                    <button type="button" class="category-pill" data-cat="energia">Energia</button>
+            <!-- MODIFICA: Creato un wrapper e due sezioni separate -->
+            <div class="category-wrapper">
+                <div class="category-section">
+                    <span class="category-label">Categoria:</span>
+                    <div class="category-pills">
+                        <!-- Categorie principali (contratti) - Aggiunta classe contract-pill -->
+                        <button type="button" class="category-pill contract-pill" data-cat="lavori">Lavori</button>
+                        <button type="button" class="category-pill contract-pill" data-cat="servizi">Servizi</button>
+                        <button type="button" class="category-pill contract-pill" data-cat="forniture">Forniture</button>
+                    </div>
+                </div>
+                <div class="category-section">
+                    <span class="category-label">Categorie merceologiche:</span>
+                    <div class="category-pills">
+                        <!-- Nuove categorie tematiche - Aggiunta classe merceologica-pill -->
+                        <button type="button" class="category-pill merceologica-pill" data-cat="sanit">Sanità</button>
+                        <button type="button" class="category-pill merceologica-pill" data-cat="scuola">Scuola</button>
+                        <button type="button" class="category-pill merceologica-pill" data-cat="informatica">Informatica</button>
+                        <button type="button" class="category-pill merceologica-pill" data-cat="ambiente">Ambiente</button>
+                        <button type="button" class="category-pill merceologica-pill" data-cat="sociale">Sociale</button>
+                        <button type="button" class="category-pill merceologica-pill" data-cat="cultura">Cultura</button>
+                        <button type="button" class="category-pill merceologica-pill" data-cat="trasporti">Trasporti</button>
+                        <button type="button" class="category-pill merceologica-pill" data-cat="energia">Energia</button>
+                    </div>
                 </div>
             </div>
 
@@ -491,9 +543,37 @@
                     <label for="oggetto-input">Oggetto del bando:</label>
                     <input type="text" id="oggetto-input" placeholder="Parole chiave nell'oggetto...">
                 </div>
-                <div class="form-group" id="ente-input-group">
-                    <label for="ente-input">Denominazione Ente:</label>
-                    <input type="text" id="ente-input" placeholder="Cerca per ente...">
+                
+                <!-- NUOVO WRAPPER PER I CAMPI ENTE -->
+                <div class="ente-fields-wrapper">
+                    <div class="form-group" id="ente-proponente-group">
+                        <label for="ente-proponente-select">Ente Proponente:</label>
+                        <select id="ente-proponente-select"></select>
+                    </div>
+                    <div class="form-group" id="ente-appaltante-group">
+                        <label for="ente-appaltante-select">Ente Appaltante:</label>
+                        <select id="ente-appaltante-select"></select>
+                    </div>
+                </div>
+
+                <!-- NUOVO WRAPPER PER I CAMPI RANGE -->
+                <div class="range-fields-wrapper">
+                    <div class="form-group" id="importo-da-group">
+                        <label for="importo-da-input">Importo da:</label>
+                        <input type="number" id="importo-da-input" placeholder="Es. 10000" min="0">
+                    </div>
+                    <div class="form-group" id="importo-a-group">
+                        <label for="importo-a-input">Importo a:</label>
+                        <input type="number" id="importo-a-input" placeholder="Es. 50000" min="0">
+                    </div>
+                    <div class="form-group" id="data-da-group">
+                        <label for="data-da-input">Pubblicazione da:</label>
+                        <input type="date" id="data-da-input">
+                    </div>
+                    <div class="form-group" id="data-a-group">
+                        <label for="data-a-input">Pubblicazione a:</label>
+                        <input type="date" id="data-a-input">
+                    </div>
                 </div>
             </div>
             <div id="controls-container">
@@ -560,16 +640,48 @@
         const currentPageSpan = document.getElementById('current-page-span');
         const paginationControls = document.getElementById('pagination-controls');
         const tabButtons = document.querySelectorAll('.tab-link');
-        const categoryPills = document.querySelectorAll('.category-pill');
+        // Seleziona i due gruppi di pillole separatamente
+        const contractPills = document.querySelectorAll('.contract-pill');
+        const merceologicaPills = document.querySelectorAll('.merceologica-pill');
         const resultsStatusContainer = document.getElementById('results-status-container');
+        // Nuovi elementi select
+        const enteProponenteSelect = document.getElementById('ente-proponente-select');
+        const enteAppaltanteSelect = document.getElementById('ente-appaltante-select');
 
         // --- STATO DELL'APPLICAZIONE ---
         let currentPage = 1;
         let fetchedItems = [];
         let currentView = 'sintetico';
-        let selectedCategory = '';
+        // Variabili separate per i filtri
+        let selectedContractType = '';
+        let selectedMerceologica = '';
         let map = null; // Riferimento alla mappa Leaflet
         let markersLayer = null; // Layer per i cluster di pin sulla mappa
+
+        // --- DB ENTI (Simulato - Primi 20 come richiesto) ---
+        const entiList = [
+            "\"\"\"CENTRO DI STUDI STORICO-LETTERARI NATALINO SAPEGNO\"\" ONLUS\"",
+            "AGENZIA REGIONALE DEI SEGRETARI DEGLI ENTI LOCALI DELLA VALLE D’AOSTA",
+            "ANPAS Comitato Regionale Valle d’Aosta Federazione Regionale del Soccorso VDA-ODV",
+            "AREA VDA - AGENZIA REGIONALE PER LE EROGAZIONE IN AGRICOLTURA DELLA REGIONE AUTONOMA VALLE D'AOSTA",
+            "ARER VALLE D'AOSTA",
+            "ARPA VALLE D'AOSTA",
+            "ASSOCIATION REGIONALE ELEVEURS VALDOTAINS (A.R.E.V.)",
+            "ASSOCIAZIONE FORTE DI BARD",
+            "ASSOCIAZIONE VALDOSTANA MAESTRI DI SCI - AVMS",
+            "AVDA SPA",
+            "AZIENDA PUBBLICI SERVIZI AOSTA SOCIETA PER AZIONI",
+            "AZIENDA USL VALLE D'AOSTA",
+            "C.M.F. SAINT-PIERRE VILLENEUVE",
+            "CAMERA VALDOSTANA DELLE IMPRESE E DELLE PROFESSIONI",
+            "CASA DI RIPOSO J. B. FESTAZ",
+            "CENTRO SERVIZI COURMAYEUR SRL",
+            "CERVIM",
+            "CHAMOIS SERVIZI SRL",
+            "COLLEGIO GEOMETRI E GEOMETRI LAUREATI DELLA VALLE D’AOSTA",
+            "COMUNE DI ALLEIN"
+            // Lista completa omessa per stabilità
+        ];
 
         // --- LISTA COMPLETA COORDINATE 74 COMUNI VDA ---
         const comuniVdA = {
@@ -674,6 +786,24 @@
             'sanit': ['sanitario', 'ospedale', 'medico', 'infermieristico', 'farmaci', 'ausili', 'clinico', 'ambulatorio', 'socio-sanitario', 'riabilitazione', 'usl', 'asl', 'azienda ospedaliera', 'distretto', 'consultorio'],
             'scuola': ['scuola', 'didattico', 'istruzione', 'alunni', 'mensa', 'formazione', 'nido', 'materna', 'elementare', 'media', 'superiore', 'università', 'scolastico']
         };
+        
+        // --- NUOVA FUNZIONE PER POPOLARE I MENU A TENDINA DEGLI ENTI ---
+        function populateEnteSelects() {
+            // Opzione di default
+            const defaultOption = '<option value="">Tutti</option>';
+            enteProponenteSelect.innerHTML = defaultOption;
+            enteAppaltanteSelect.innerHTML = defaultOption;
+
+            // Popola la lista
+            entiList.forEach(ente => {
+                // Rimuovi eventuali virgolette extra per il valore e il testo
+                const cleanEnte = ente.replace(/^"+|"+$/g, '').replace(/""/g, '"');
+                const optionHtml = `<option value="${cleanEnte}">${cleanEnte}</option>`;
+                enteProponenteSelect.insertAdjacentHTML('beforeend', optionHtml);
+                enteAppaltanteSelect.insertAdjacentHTML('beforeend', optionHtml);
+            });
+        }
+
 
         // --- COSTRUZIONE URL (Bandi) ---
         function buildUrl() {
@@ -681,7 +811,15 @@
             const numResults = numResultsInput.value;
             const cig = document.getElementById('cig-input').value.trim();
             let oggetto = document.getElementById('oggetto-input').value.trim();
-            const ente = document.getElementById('ente-input').value.trim();
+            // Legge dai nuovi menu a tendina
+            const enteProponente = enteProponenteSelect.value;
+            const enteAppaltante = enteAppaltanteSelect.value;
+            // --- INIZIO NUOVE AGGIUNTE ---
+            const importoDa = document.getElementById('importo-da-input').value;
+            const importoA = document.getElementById('importo-a-input').value;
+            const dataDa = document.getElementById('data-da-input').value;
+            const dataA = document.getElementById('data-a-input').value;
+            // --- FINE NUOVE AGGIUNTE ---
 
             const params = new URLSearchParams({
                 Table: 'DASHBOARD_VIEW_DOCUMENTI_PUBBLICI',
@@ -697,17 +835,35 @@
             if (cig) filters.push(`CIG LIKE '%${encodeURIComponent(cig)}%'`);
             if (oggetto) filters.push(`Oggetto LIKE '%${encodeURIComponent(oggetto)}%'`);
             
-            if (selectedCategory) {
-                const catLower = selectedCategory.toLowerCase();
-                if (['lavori', 'servizi', 'forniture'].includes(catLower)) {
-                     filters.push(`Contratto LIKE '%${encodeURIComponent(selectedCategory)}%'`);
-                } else {
-                    const synonyms = categorySynonyms[catLower] || [catLower];
-                    const orQuery = synonyms.map(word => `Oggetto LIKE '%${encodeURIComponent(word)}%'`).join(' OR ');
-                    filters.push(`(${orQuery})`);
-                }
+            // --- MODIFICA LOGICA FILTRI CATEGORIA ---
+            // Filtro per Categoria (Contratto)
+            if (selectedContractType) {
+                 filters.push(`Contratto LIKE '%${encodeURIComponent(selectedContractType)}%'`);
             }
-            if (ente) filters.push(`EnteProponente LIKE '%${encodeURIComponent(ente)}%'`);
+            // Filtro per Categoria Merceologica (Oggetto)
+            if (selectedMerceologica) {
+                const catLower = selectedMerceologica.toLowerCase();
+                const synonyms = categorySynonyms[catLower] || [catLower];
+                const orQuery = synonyms.map(word => `Oggetto LIKE '%${encodeURIComponent(word)}%'`).join(' OR ');
+                filters.push(`(${orQuery})`);
+            }
+            // --- FINE MODIFICA ---
+            
+            // Applica i filtri per i menu a tendina
+            if (enteProponente) filters.push(`afs:EnteProponente LIKE '%${encodeURIComponent(enteProponente)}%'`);
+            if (enteAppaltante) filters.push(`afs:DenominazioneEnte LIKE '%${encodeURIComponent(enteAppaltante)}%'`);
+            
+            // --- INIZIO NUOVE AGGIUNTE FILTRI RANGE ---
+            // Nota: i campi numerici e data non usano 'LIKE' e non mettono '%'
+            // Per i campi numerici, non mettiamo apici.
+            if (importoDa) filters.push(`afs:a_base_asta >= ${importoDa}`);
+            if (importoA) filters.push(`afs:a_base_asta <= ${importoA}`);
+            
+            // Per i campi data, il server si aspetta 'YYYY-MM-DD' tra apici.
+            if (dataDa) filters.push(`DtPubblicazione >= '${dataDa}'`);
+            if (dataA) filters.push(`DtPubblicazione <= '${dataA}'`);
+            // --- FINE NUOVE AGGIUNTE FILTRI RANGE ---
+
             if (filters.length > 0) params.set('Filter', filters.join(' AND '));
             return `${baseUrl}?${params.toString()}`;
         }
@@ -765,7 +921,8 @@
 
             fetchedItems.forEach(item => {
                 const data = extractData(item);
-                const enteNormalized = data.ente ? data.ente.toLowerCase()
+                // Usa il dato grezzo per la mappa
+                const enteNormalized = data.ente_raw ? data.ente_raw.toLowerCase()
                     .replace('communauté de montagne', 'unite des communes valdotaines')
                     .replace("unite' des communes valdotaines", 'unite des communes valdotaines') : "";
                 
@@ -792,7 +949,7 @@
                     const popupContent = `
                         <div style="max-width: 250px;">
                             <b>${title}</b><br>
-                            <small style="color: #666;">${data.ente}</small><br>
+                            <small style="color: #666;">${data.enteProponente}</small><br>
                             <p style="margin: 8px 0;">${shortOggetto}</p>
                             <span style="color: #dc3545; font-size: 0.9em;">Scadenza: ${formatDate(data.scadenza)}</span><br>
                             <a href="${linkRaw}" target="_blank">Vedi dettagli gara &rarr;</a>
@@ -859,9 +1016,14 @@
                                     </div>
                                 </div>
                                 <div class="synthetic-body">
+                                    <!-- MODIFICA: Mostra entrambi gli enti -->
+                                    <div class="info-group" style="grid-column: 1 / -1;">
+                                        <span class="info-label">Ente Proponente</span>
+                                        <span class="info-value ente">${data.enteProponente}</span>
+                                    </div>
                                     <div class="info-group" style="grid-column: 1 / -1;">
                                         <span class="info-label">Ente Appaltante</span>
-                                        <span class="info-value ente">${data.ente || 'N/D'}</span>
+                                        <span class="info-value ente">${data.enteAppaltante}</span>
                                     </div>
                                     <div class="info-group" style="grid-column: 1 / -1;">
                                         <span class="info-label">Oggetto del Bando</span>
@@ -909,10 +1071,17 @@
                 }
                 return null;
             };
+            
+            // Estrae entrambi i campi
+            const enteProponente = getSafe(['afs:EnteProponente', 'ente', 'amministrazione']);
+            const enteAppaltante = getSafe(['afs:DenominazioneEnte', 'denominazioneente']);
+
             return {
                 esito: getSafe(['esito', 'stato']),
                 cig: getSafe(['afs:CIG', 'CIG', 'cig']),
-                ente: getSafe(['afs:EnteProponente', 'ente', 'denominazioneente', 'amministrazione']),
+                enteProponente: enteProponente || 'N/D',
+                enteAppaltante: enteAppaltante || 'N/D', 
+                ente_raw: enteProponente, // Per la logica della mappa
                 oggetto: getSafe(['description', 'oggetto', 'titolo']),
                 baseAsta: getSafe(['afs:a_base_asta', 'importo', 'basedasta']) || 'N/D',
                 contratto: getSafe(['afs:Contratto', 'tipologia', 'contratto']) || 'N/D',
@@ -1077,20 +1246,38 @@
             displayItems(); // Ridisegna l'interfaccia 
         }));
 
-        categoryPills.forEach(pill => pill.addEventListener('click', () => {
+        // --- MODIFICA: Due listener separati per i gruppi di pillole ---
+        contractPills.forEach(pill => pill.addEventListener('click', () => {
             if (pill.classList.contains('active')) {
                 pill.classList.remove('active');
-                selectedCategory = '';
+                selectedContractType = '';
             } else {
-                categoryPills.forEach(p => p.classList.remove('active'));
+                contractPills.forEach(p => p.classList.remove('active'));
                 pill.classList.add('active');
-                selectedCategory = pill.dataset.cat;
+                selectedContractType = pill.dataset.cat;
             }
             currentPage = 1;
-            fetchFeed(); // La ricerca per categoria si applica solo al fetchFeed standard
+            fetchFeed();
         }));
 
-        document.addEventListener("DOMContentLoaded", fetchFeed);
+        merceologicaPills.forEach(pill => pill.addEventListener('click', () => {
+            if (pill.classList.contains('active')) {
+                pill.classList.remove('active');
+                selectedMerceologica = '';
+            } else {
+                merceologicaPills.forEach(p => p.classList.remove('active'));
+                pill.classList.add('active');
+                selectedMerceologica = pill.dataset.cat;
+            }
+            currentPage = 1;
+            fetchFeed();
+        }));
+        // --- FINE MODIFICA ---
+
+        document.addEventListener("DOMContentLoaded", () => {
+             populateEnteSelects(); // Chiamata alla nuova funzione
+             fetchFeed();
+        });
     </script>
 </body>
 </html>
