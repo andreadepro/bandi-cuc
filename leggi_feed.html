@@ -571,11 +571,11 @@
                         <input type="number" id="importo-a-input" placeholder="Es. 50000" min="0">
                     </div>
                     <div class="form-group" id="data-da-group">
-                        <label for="data-da-input">Pubblicazione da:</label>
+                        <label for="data-da-input">Scadenza da:</label>
                         <input type="date" id="data-da-input">
                     </div>
                     <div class="form-group" id="data-a-group">
-                        <label for="data-a-input">Pubblicazione a:</label>
+                        <label for="data-a-input">Scadenza a:</label>
                         <input type="date" id="data-a-input">
                     </div>
                 </div>
@@ -842,7 +842,7 @@
 
             const filters = [];
             if (cig) filters.push(`CIG LIKE '%${encodeURIComponent(cig)}%'`);
-            if (oggetto) filters.push(`Oggetto LIKE '%${encodeURIComponent(oggetto)}%'`);
+            if (oggetto) filters.push(`afs:Oggetto LIKE '%${encodeURIComponent(oggetto)}%'`);
             
             // --- MODIFICA LOGICA FILTRI CATEGORIA ---
             // Filtro per Categoria (Contratto)
@@ -853,25 +853,32 @@
             if (selectedMerceologica) {
                 const catLower = selectedMerceologica.toLowerCase();
                 const synonyms = categorySynonyms[catLower] || [catLower];
-                const orQuery = synonyms.map(word => `Oggetto LIKE '%${encodeURIComponent(word)}%'`).join(' OR ');
+                const orQuery = synonyms.map(word => `afs:Oggetto LIKE '%${encodeURIComponent(word)}%'`).join(' OR ');
                 filters.push(`(${orQuery})`);
             }
             // --- FINE MODIFICA ---
             
-            // Applica i filtri per i menu a tendina
-            if (enteProponente) filters.push(`afs:EnteProponente LIKE '%${encodeURIComponent(enteProponente)}%'`);
-            if (enteAppaltante) filters.push(`afs:DenominazioneEnte LIKE '%${encodeURIComponent(enteAppaltante)}%'`);
+            // --- MODIFICA FILTRI ENTE ---
+            // Usa un match esatto (=) e esegue l'escape degli apici (sostituendo ' con '') per sicurezza
+            if (enteProponente) {
+                const safeEnteProp = enteProponente.replace(/'/g, "''");
+                filters.push(`afs:EnteProponente = '${safeEnteProp}'`);
+            }
+            if (enteAppaltante) {
+                const safeEnteApp = enteAppaltante.replace(/'/g, "''");
+                filters.push(`afs:DenominazioneEnte = '${safeEnteApp}'`);
+            }
+            // --- FINE MODIFICA ---
             
             // --- INIZIO NUOVE AGGIUNTE FILTRI RANGE ---
-            // Nota: i campi numerici e data non usano 'LIKE' e non mettono '%'
-            // Per i campi numerici, non mettiamo apici.
             if (importoDa) filters.push(`afs:a_base_asta >= ${importoDa}`);
             if (importoA) filters.push(`afs:a_base_asta <= ${importoA}`);
             
-            // Per i campi data, il server si aspetta 'YYYY-MM-DD' tra apici.
-            if (dataDa) filters.push(`DtPubblicazione >= '${dataDa}'`);
-            if (dataA) filters.push(`DtPubblicazione <= '${dataA}'`);
-            // --- FINE NUOVE AGGIUNTE FILTRI RANGE ---
+            // --- MODIFICA FILTRI DATA ---
+            // Il server si aspetta un DATETIME completo. Aggiungiamo T00:00:00 e T23:59:59
+            if (dataDa) filters.push(`afs:DtScadenzaBandoTecnical >= '${dataDa}T00:00:00'`);
+            if (dataA) filters.push(`afs:DtScadenzaBandoTecnical <= '${dataA}T23:59:59'`);
+            // --- FINE MODIFICA ---
 
             if (filters.length > 0) params.set('Filter', filters.join(' AND '));
             return `${baseUrl}?${params.toString()}`;
@@ -1091,7 +1098,7 @@
                 enteProponente: enteProponente || 'N/D',
                 enteAppaltante: enteAppaltante || 'N/D', 
                 ente_raw: enteProponente, // Per la logica della mappa
-                oggetto: getSafe(['description', 'oggetto', 'titolo']),
+                oggetto: getSafe(['afs:Oggetto', 'description', 'oggetto', 'titolo']),
                 baseAsta: getSafe(['afs:a_base_asta', 'importo', 'basedasta']) || 'N/D',
                 contratto: getSafe(['afs:Contratto', 'tipologia', 'contratto']) || 'N/D',
                 scadenza: getSafe(['afs:DtScadenzaBandoTecnical', 'afs:dtscadenza', 'dtscadenza', 'scadenza']) || 'N/D'
