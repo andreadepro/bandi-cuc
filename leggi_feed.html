@@ -841,43 +841,42 @@
             });
 
             const filters = [];
+            // --- REVISIONE DI TUTTI I FILTRI (rimozione namespace 'afs:') ---
             if (cig) filters.push(`CIG LIKE '%${encodeURIComponent(cig)}%'`);
-            if (oggetto) filters.push(`afs:Oggetto LIKE '%${encodeURIComponent(oggetto)}%'`);
+            if (oggetto) filters.push(`Oggetto LIKE '%${encodeURIComponent(oggetto)}%'`); // MODIFICATO
             
             // --- MODIFICA LOGICA FILTRI CATEGORIA ---
             // Filtro per Categoria (Contratto)
             if (selectedContractType) {
-                 filters.push(`Contratto LIKE '%${encodeURIComponent(selectedContractType)}%'`);
+                 filters.push(`Contratto LIKE '%${encodeURIComponent(selectedContractType)}%'`); // MODIFICATO
             }
             // Filtro per Categoria Merceologica (Oggetto)
             if (selectedMerceologica) {
                 const catLower = selectedMerceologica.toLowerCase();
                 const synonyms = categorySynonyms[catLower] || [catLower];
-                const orQuery = synonyms.map(word => `afs:Oggetto LIKE '%${encodeURIComponent(word)}%'`).join(' OR ');
+                const orQuery = synonyms.map(word => `Oggetto LIKE '%${encodeURIComponent(word)}%'`).join(' OR '); // MODIFICATO
                 filters.push(`(${orQuery})`);
             }
             // --- FINE MODIFICA ---
             
             // --- MODIFICA FILTRI ENTE ---
-            // Usa un match esatto (=) e esegue l'escape degli apici (sostituendo ' con '') per sicurezza
+            // Riportati a LIKE e rimosso namespace
             if (enteProponente) {
-                const safeEnteProp = enteProponente.replace(/'/g, "''");
-                filters.push(`afs:EnteProponente = '${safeEnteProp}'`);
+                filters.push(`EnteProponente LIKE '%${enteProponente.replace(/'/g, "''")}%'`);
             }
             if (enteAppaltante) {
-                const safeEnteApp = enteAppaltante.replace(/'/g, "''");
-                filters.push(`afs:DenominazioneEnte = '${safeEnteApp}'`);
+                filters.push(`DenominazioneEnte LIKE '%${enteAppaltante.replace(/'/g, "''")}%'`);
             }
             // --- FINE MODIFICA ---
             
             // --- INIZIO NUOVE AGGIUNTE FILTRI RANGE ---
-            if (importoDa) filters.push(`afs:a_base_asta >= ${importoDa}`);
-            if (importoA) filters.push(`afs:a_base_asta <= ${importoA}`);
+            // Rimosso namespace
+            if (importoDa) filters.push(`a_base_asta >= ${importoDa}`);
+            if (importoA) filters.push(`a_base_asta <= ${importoA}`);
             
-            // --- MODIFICA FILTRI DATA ---
-            // Il server si aspetta un DATETIME completo. Aggiungiamo T00:00:00 e T23:59:59
-            if (dataDa) filters.push(`afs:DtScadenzaBandoTecnical >= '${dataDa}T00:00:00'`);
-            if (dataA) filters.push(`afs:DtScadenzaBandoTecnical <= '${dataA}T23:59:59'`);
+            // Rimosso namespace e CORRETTO
+            if (dataDa) filters.push(`DtScadenzaBandoTecnical >= '${dataDa}T00:00:00'`);
+            if (dataA) filters.push(`DtScadenzaBandoTecnical <= '${dataA}T23:59:59'`);
             // --- FINE MODIFICA ---
 
             if (filters.length > 0) params.set('Filter', filters.join(' AND '));
