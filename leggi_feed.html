@@ -97,13 +97,20 @@
             margin-bottom: 25px;
         }
         /* NUOVO CSS PER I WRAPPER DEI CAMPI */
-        .ente-fields-wrapper,
-        .range-fields-wrapper { /* AGGIUNTO */
+        .ente-fields-wrapper {
             /* Occupa l'intera larghezza della griglia principale */
             grid-column: 1 / -1; 
             display: grid;
             /* Due colonne per i menu a tendina */
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+        .range-fields-wrapper { /* MODIFICATO */
+            /* Occupa l'intera larghezza della griglia principale */
+            grid-column: 1 / -1; 
+            display: grid;
+            /* Quattro colonne fisse per i range */
+            grid-template-columns: repeat(4, 1fr);
             gap: 20px;
         }
 
@@ -148,12 +155,15 @@
         
         #controls-container {
             display: flex;
-            gap: 20px;
+            gap: 10px; /* Ridotto il gap per far stare tutto */
             align-items: flex-end;
             justify-content: space-between; /* Spazia i controlli */
         }
+        #controls-container .form-group {
+             flex-grow: 1; /* Spinge i bottoni a destra */
+        }
         #controls-container button[type="submit"] {
-            padding: 12px 30px;
+            padding: 12px 25px; /* Modificato padding */
             border: none;
             background-color: var(--success-color);
             color: white;
@@ -163,12 +173,31 @@
             font-weight: 600;
             transition: background-color 0.2s, transform 0.1s;
             height: 48px; /* Allinea con gli input */
+            flex-shrink: 0; /* Non far rimpicciolire i bottoni */
         }
         #controls-container button[type="submit"]:hover {
             background-color: #218838;
             transform: translateY(-1px);
         }
         #controls-container button[type="submit"]:active { transform: translateY(1px); }
+
+        /* NUOVO STILE PER IL RESET */
+        #reset-filters-btn {
+            padding: 12px 25px;
+            border: none;
+            background-color: var(--secondary-color);
+            color: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: background-color 0.2s, transform 0.1s;
+            height: 48px;
+            flex-shrink: 0;
+        }
+        #reset-filters-btn:hover {
+            background-color: #5a6268;
+        }
 
         /* --- Logica per nascondere i filtri nel tab "Cerca Esito" --- */
         #search-form.esito-mode .category-wrapper, /* Modificato */
@@ -585,7 +614,11 @@
                     <label for="num-results-input">Risultati/pag:</label>
                     <input type="number" id="num-results-input" value="10" min="1" max="1000">
                 </div>
-                <button type="submit">Applica Filtri</button>
+                <!-- Pulsanti raggruppati per layout -->
+                <div class="button-group" style="display: flex; gap: 10px; flex-shrink: 0;">
+                    <button type="button" id="reset-filters-btn">Azzera Filtri</button>
+                    <button type="submit">Applica Filtri</button>
+                </div>
             </div>
         </form>
     </div>
@@ -651,6 +684,8 @@
         // Nuovi elementi select
         const enteProponenteSelect = document.getElementById('ente-proponente-select');
         const enteAppaltanteSelect = document.getElementById('ente-appaltante-select');
+        // Nuovo pulsante Reset
+        const resetFiltersBtn = document.getElementById('reset-filters-btn');
 
         // --- STATO DELL'APPLICAZIONE ---
         let currentPage = 1;
@@ -843,18 +878,19 @@
             const filters = [];
             // --- REVISIONE DI TUTTI I FILTRI (rimozione namespace 'afs:') ---
             if (cig) filters.push(`CIG LIKE '%${encodeURIComponent(cig)}%'`);
-            if (oggetto) filters.push(`Oggetto LIKE '%${encodeURIComponent(oggetto)}%'`); // MODIFICATO
+            if (oggetto) filters.push(`Oggetto LIKE '%${encodeURIComponent(oggetto)}%'`); 
             
             // --- MODIFICA LOGICA FILTRI CATEGORIA ---
             // Filtro per Categoria (Contratto)
+            // CORREZIONE: Usare le variabili corrette selectedContractType e selectedMerceologica
             if (selectedContractType) {
-                 filters.push(`Contratto LIKE '%${encodeURIComponent(selectedContractType)}%'`); // MODIFICATO
+                 filters.push(`Contratto LIKE '%${encodeURIComponent(selectedContractType)}%'`);
             }
             // Filtro per Categoria Merceologica (Oggetto)
             if (selectedMerceologica) {
                 const catLower = selectedMerceologica.toLowerCase();
                 const synonyms = categorySynonyms[catLower] || [catLower];
-                const orQuery = synonyms.map(word => `Oggetto LIKE '%${encodeURIComponent(word)}%'`).join(' OR '); // MODIFICATO
+                const orQuery = synonyms.map(word => `Oggetto LIKE '%${encodeURIComponent(word)}%'`).join(' OR ');
                 filters.push(`(${orQuery})`);
             }
             // --- FINE MODIFICA ---
@@ -870,9 +906,7 @@
             // --- FINE MODIFICA ---
             
             // --- INIZIO NUOVE AGGIUNTE FILTRI RANGE ---
-            // Rimosso namespace
-            if (importoDa) filters.push(`a_base_asta >= ${importoDa}`);
-            if (importoA) filters.push(`a_base_asta <= ${importoA}`);
+            // RIMOSSI i filtri importo da qui. Saranno gestiti lato client.
             
             // Rimosso namespace e CORRETTO
             if (dataDa) filters.push(`DtScadenzaBandoTecnical >= '${dataDa}T00:00:00'`);
@@ -914,6 +948,18 @@
         function formatOggetto(text) {
             if (!text) return 'Descrizione non disponibile';
             return text.replace(/\s*(Scadenza:)/gi, '<br><strong style="color:#dc3545;">$1</strong>');
+        }
+
+        // --- NUOVA FUNZIONE HELPER PER PARSARE GLI IMPORTI ---
+        function parseImporto(importoStr) {
+            if (!importoStr || importoStr === 'N/D') return null;
+            try {
+                // Rimuove i punti (migliaia), sostituisce la virgola (decimali) con un punto, poi converte in numero
+                return parseFloat(importoStr.replace(/\./g, '').replace(',', '.'));
+            } catch (e) {
+                console.warn(`Impossibile parsare l'importo: ${importoStr}`, e);
+                return null;
+            }
         }
 
         // --- FUNZIONE PER INIZIALIZZARE E AGGIORNARE LA MAPPA ---
@@ -1002,14 +1048,38 @@
             // Popola solo se la vista non è mappa e non è cerca-esito
             if (currentView === 'sintetico' || currentView === 'completo') {
                  feedContainer.innerHTML = '';
-                 if (!fetchedItems || fetchedItems.length === 0) {
+
+                 // --- NUOVA LOGICA DI FILTRO LATO CLIENT PER IMPORTO ---
+                const importoDa = parseFloat(document.getElementById('importo-da-input').value) || 0;
+                const importoA = parseFloat(document.getElementById('importo-a-input').value) || Infinity;
+                
+                const filteredItems = fetchedItems.filter(item => {
+                    const data = extractData(item);
+                    const importoBando = parseImporto(data.baseAsta);
+
+                    // Se l'importo non è parsabile (es. 'N/D'), lo escludiamo dal filtro range
+                    if (importoBando === null) {
+                        // Se l'utente non ha messo filtri (0 e Infinity), mostriamo anche N/D
+                        return importoDa === 0 && importoA === Infinity;
+                    }
+                    
+                    return (importoBando >= importoDa) && (importoBando <= importoA);
+                });
+                // --- FINE LOGICA FILTRO ---
+
+
+                 if (!filteredItems || filteredItems.length === 0) { // Modificato: usa filteredItems
                     feedContainer.innerHTML = "<p style='text-align:center; padding: 20px;'>Nessun elemento trovato per i criteri specificati.</p>";
                     nextPageBtn.disabled = true;
+                    // Aggiorniamo comunque il contatore (anche se è 0)
+                    resultsStatusContainer.innerHTML = `<p id="results-status">Trovati 0 risultati che corrispondono ai filtri in questa pagina.</p>`;
                     return;
                 }
-                resultsStatusContainer.innerHTML = `<p id="results-status">Trovati ${fetchedItems.length} risultati in questa pagina.</p>`;
+                // Modificato: usa filteredItems
+                resultsStatusContainer.innerHTML = `<p id="results-status">Trovati ${filteredItems.length} risultati che corrispondono ai filtri in questa pagina.</p>`;
                 try {
-                    fetchedItems.forEach(item => {
+                    // Modificato: itera su filteredItems invece di fetchedItems
+                    filteredItems.forEach(item => {
                         const title = item.querySelector("title")?.textContent || 'N/D';
                         let linkRaw = item.querySelector("link")?.textContent?.trim() || '#';
                         linkRaw = linkRaw.replace(/\/\/*portale\//g, '/portalegare/');
@@ -1232,6 +1302,40 @@
                 fetchEsitoByCig();
             } else {
                 currentPage = 1;
+                fetchFeed();
+            }
+        });
+        
+        // NUOVO LISTENER PER IL RESET
+        resetFiltersBtn.addEventListener('click', () => {
+             // Resetta campi di testo
+            document.getElementById('cig-input').value = '';
+            document.getElementById('oggetto-input').value = '';
+            
+            // Resetta menu a tendina
+            enteProponenteSelect.value = '';
+            enteAppaltanteSelect.value = '';
+            
+            // Resetta campi range
+            document.getElementById('importo-da-input').value = '';
+            document.getElementById('importo-a-input').value = '';
+            document.getElementById('data-da-input').value = '';
+            document.getElementById('data-a-input').value = '';
+
+            // Resetta pillole Categoria
+            contractPills.forEach(p => p.classList.remove('active'));
+            selectedContractType = '';
+
+            // Resetta pillole Merceologiche
+            merceologicaPills.forEach(p => p.classList.remove('active'));
+            selectedMerceologica = '';
+            
+            // Resetta paginazione e risultati
+            numResultsInput.value = '10'; // Resetta al default
+            currentPage = 1;
+            
+            // Ricarica i dati solo se non siamo nel tab esito
+            if (currentView !== 'cerca-esito') {
                 fetchFeed();
             }
         });
