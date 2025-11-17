@@ -9,6 +9,13 @@
     <!-- Leaflet MarkerCluster CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
+    
+    <!-- MODIFICA: Spostato JS in <head> per fixare errore di caricamento -->
+    <!-- Leaflet JS per la mappa -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <!-- Leaflet MarkerCluster JS (deve essere DOPO leaflet.js) -->
+    <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
+
     <style>
         :root {
             --primary-color: #0056b3; /* Un blu più professionale */
@@ -97,15 +104,8 @@
             margin-bottom: 25px;
         }
         /* NUOVO CSS PER I WRAPPER DEI CAMPI */
-        .ente-fields-wrapper {
-            /* Occupa l'intera larghezza della griglia principale */
-            grid-column: 1 / -1; 
-            display: grid;
-            /* Due colonne per i menu a tendina */
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-        }
-        .range-fields-wrapper { /* MODIFICATO */
+        .ente-fields-wrapper,
+        .range-fields-wrapper { /* AGGIUNTO */
             /* Occupa l'intera larghezza della griglia principale */
             grid-column: 1 / -1; 
             display: grid;
@@ -153,6 +153,19 @@
             padding-right: 0.75rem; /* Rimuovi padding extra su input date */
         }
         
+        /* Stile per il fieldset (contenitore filtri) */
+        fieldset {
+            border: none;
+            padding: 0;
+            margin: 0;
+            min-width: 0; /* Fix per layout in Firefox */
+        }
+        /* Quando disabilitato, rendilo semi-trasparente */
+        fieldset:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
         #controls-container {
             display: flex;
             gap: 10px; /* Ridotto il gap per far stare tutto */
@@ -536,90 +549,93 @@
         <h1>INVA - Bandi PlaCe-VdA</h1>
         <form id="search-form">
             
-            <!-- MODIFICA: Creato un wrapper e due sezioni separate -->
-            <div class="category-wrapper">
-                <div class="category-section">
-                    <span class="category-label">Categoria:</span>
-                    <div class="category-pills">
-                        <!-- Categorie principali (contratti) - Aggiunta classe contract-pill -->
-                        <button type="button" class="category-pill contract-pill" data-cat="lavori">Lavori</button>
-                        <button type="button" class="category-pill contract-pill" data-cat="servizi">Servizi</button>
-                        <button type="button" class="category-pill contract-pill" data-cat="forniture">Forniture</button>
+            <!-- Aggiunto fieldset per disabilitare i filtri durante il caricamento -->
+            <fieldset id="filters-fieldset">
+                <!-- MODIFICA: Creato un wrapper e due sezioni separate -->
+                <div class="category-wrapper">
+                    <div class="category-section">
+                        <span class="category-label">Categoria:</span>
+                        <div class="category-pills">
+                            <!-- Categorie principali (contratti) - Aggiunta classe contract-pill -->
+                            <button type="button" class="category-pill contract-pill" data-cat="lavori">Lavori</button>
+                            <button type="button" class="category-pill contract-pill" data-cat="servizi">Servizi</button>
+                            <button type="button" class="category-pill contract-pill" data-cat="forniture">Forniture</button>
+                        </div>
                     </div>
-                </div>
-                <div class="category-section">
-                    <span class="category-label">Categorie merceologiche:</span>
-                    <div class="category-pills">
-                        <!-- NUOVE categorie dal CSV -->
-                        <button type="button" class="category-pill merceologica-pill" data-cat="ict">ICT e Digitalizzazione</button>
-                        <button type="button" class="category-pill merceologica-pill" data-cat="generali">Beni e Servizi Generali</button>
-                        <button type="button" class="category-pill merceologica-pill" data-cat="sanita_dispositivi">Sanità - Dispositivi e Farmaci</button>
-                        <button type="button" class="category-pill merceologica-pill" data-cat="sanita_servizi">Sanità - Servizi Specialistici</button>
-                        <button type="button" class="category-pill merceologica-pill" data-cat="energia">Energia, Combustibili e Utilities</button>
-                        <button type="button" class="category-pill merceologica-pill" data-cat="efficienza">Efficienza Energetica e Sostenibilità</button>
-                        <button type="button" class="category-pill merceologica-pill" data-cat="facility">Facility Management</button>
-                        <button type="button" class="category-pill merceologica-pill" data-cat="trasporti">Veicoli, Mobilità e Trasporti</button>
-                        <button type="button" class="category-pill merceologica-pill" data-cat="consulenza">Servizi Professionali e di Consulenza</button>
-                        <button type="button" class="category-pill merceologica-pill" data-cat="cultura">Patrimonio Culturale</button>
-                        <button type="button" class="category-pill merceologica-pill" data-cat="ristorazione">Ristorazione Collettiva</button>
-                        <button type="button" class="category-pill merceologica-pill" data-cat="sicurezza">Sicurezza e Vigilanza</button>
-                    </div>
-                </div>
-            </div>
-
-            <div id="search-fields">
-                <div class="form-group" id="cig-input-group">
-                    <label for="cig-input">CIG:</label>
-                    <input type="text" id="cig-input" placeholder="Cerca per CIG...">
-                </div>
-                <div class="form-group" id="oggetto-input-group">
-                    <label for="oggetto-input">Oggetto del bando:</label>
-                    <input type="text" id="oggetto-input" placeholder="Parole chiave nell'oggetto...">
-                </div>
-                
-                <!-- NUOVO WRAPPER PER I CAMPI ENTE -->
-                <div class="ente-fields-wrapper">
-                    <div class="form-group" id="ente-proponente-group">
-                        <label for="ente-proponente-select">Ente Proponente:</label>
-                        <select id="ente-proponente-select"></select>
-                    </div>
-                    <div class="form-group" id="ente-appaltante-group">
-                        <label for="ente-appaltante-select">Ente Appaltante:</label>
-                        <select id="ente-appaltante-select"></select>
+                    <div class="category-section">
+                        <span class="category-label">Categorie merceologiche:</span>
+                        <div class="category-pills">
+                            <!-- NUOVE categorie dal CSV -->
+                            <button type="button" class="category-pill merceologica-pill" data-cat="ict">ICT e Digitalizzazione</button>
+                            <button type="button" class="category-pill merceologica-pill" data-cat="generali">Beni e Servizi Generali</button>
+                            <button type="button" class="category-pill merceologica-pill" data-cat="sanita_dispositivi">Sanità - Dispositivi e Farmaci</button>
+                            <button type="button" class="category-pill merceologica-pill" data-cat="sanita_servizi">Sanità - Servizi Specialistici</button>
+                            <button type="button" class="category-pill merceologica-pill" data-cat="energia">Energia, Combustibili e Utilities</button>
+                            <button type="button" class="category-pill merceologica-pill" data-cat="efficienza">Efficienza Energetica e Sostenibilità</button>
+                            <button type="button" class="category-pill merceologica-pill" data-cat="facility">Facility Management</button>
+                            <button type="button" class="category-pill merceologica-pill" data-cat="trasporti">Veicoli, Mobilità e Trasporti</button>
+                            <button type="button" class="category-pill merceologica-pill" data-cat="consulenza">Servizi Professionali e di Consulenza</button>
+                            <button type="button" class="category-pill merceologica-pill" data-cat="cultura">Patrimonio Culturale</button>
+                            <button type="button" class="category-pill merceologica-pill" data-cat="ristorazione">Ristorazione Collettiva</button>
+                            <button type="button" class="category-pill merceologica-pill" data-cat="sicurezza">Sicurezza e Vigilanza</button>
+                        </div>
                     </div>
                 </div>
 
-                <!-- NUOVO WRAPPER PER I CAMPI RANGE -->
-                <div class="range-fields-wrapper">
-                    <div class="form-group" id="importo-da-group">
-                        <label for="importo-da-input">Importo da:</label>
-                        <input type="number" id="importo-da-input" placeholder="Es. 10000" min="0">
+                <div id="search-fields">
+                    <div class="form-group" id="cig-input-group">
+                        <label for="cig-input">CIG:</label>
+                        <input type="text" id="cig-input" placeholder="Cerca per CIG...">
                     </div>
-                    <div class="form-group" id="importo-a-group">
-                        <label for="importo-a-input">Importo a:</label>
-                        <input type="number" id="importo-a-input" placeholder="Es. 50000" min="0">
+                    <div class="form-group" id="oggetto-input-group">
+                        <label for="oggetto-input">Oggetto del bando:</label>
+                        <input type="text" id="oggetto-input" placeholder="Parole chiave nell'oggetto...">
                     </div>
-                    <div class="form-group" id="data-da-group">
-                        <label for="data-da-input">Scadenza da:</label>
-                        <input type="date" id="data-da-input">
+                    
+                    <!-- NUOVO WRAPPER PER I CAMPI ENTE -->
+                    <div class="ente-fields-wrapper">
+                        <div class="form-group" id="ente-proponente-group">
+                            <label for="ente-proponente-select">Ente Proponente:</label>
+                            <select id="ente-proponente-select"></select>
+                        </div>
+                        <div class="form-group" id="ente-appaltante-group">
+                            <label for="ente-appaltante-select">Ente Appaltante:</label>
+                            <select id="ente-appaltante-select"></select>
+                        </div>
                     </div>
-                    <div class="form-group" id="data-a-group">
-                        <label for="data-a-input">Scadenza a:</label>
-                        <input type="date" id="data-a-input">
+
+                    <!-- NUOVO WRAPPER PER I CAMPI RANGE -->
+                    <div class="range-fields-wrapper">
+                        <div class="form-group" id="importo-da-group">
+                            <label for="importo-da-input">Importo da:</label>
+                            <input type="number" id="importo-da-input" placeholder="Es. 10000" min="0">
+                        </div>
+                        <div class="form-group" id="importo-a-group">
+                            <label for="importo-a-input">Importo a:</label>
+                            <input type="number" id="importo-a-input" placeholder="Es. 50000" min="0">
+                        </div>
+                        <div class="form-group" id="data-da-group">
+                            <label for="data-da-input">Scadenza da:</label>
+                            <input type="date" id="data-da-input">
+                        </div>
+                        <div class="form-group" id="data-a-group">
+                            <label for="data-a-input">Scadenza a:</label>
+                            <input type="date" id="data-a-input">
+                        </div>
                     </div>
                 </div>
-            </div>
-            <div id="controls-container">
-                <div class="form-group" id="num-results-group" style="max-width: 150px;">
-                    <label for="num-results-input">Risultati/pag:</label>
-                    <input type="number" id="num-results-input" value="10" min="1" max="1000">
+                <div id="controls-container">
+                    <div class="form-group" id="num-results-group" style="max-width: 150px;">
+                        <label for="num-results-input">Risultati/pag:</label>
+                        <input type="number" id="num-results-input" value="10" min="1" max="1000">
+                    </div>
+                    <!-- Pulsanti raggruppati per layout -->
+                    <div class="button-group" style="display: flex; gap: 10px; flex-shrink: 0;">
+                        <button type="button" id="reset-filters-btn">Azzera Filtri</button>
+                        <button type="submit">Applica Filtri</button>
+                    </div>
                 </div>
-                <!-- Pulsanti raggruppati per layout -->
-                <div class="button-group" style="display: flex; gap: 10px; flex-shrink: 0;">
-                    <button type="button" id="reset-filters-btn">Azzera Filtri</button>
-                    <button type="submit">Applica Filtri</button>
-                </div>
-            </div>
+            </fieldset> <!-- Chiusura Fieldset -->
         </form>
     </div>
 
@@ -658,14 +674,13 @@
         </div>
     </div>
 
-    <!-- Leaflet JS per la mappa -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-    <!-- Leaflet MarkerCluster JS -->
-    <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
+    <!-- Script Leaflet spostati in <head> -->
 
     <script>
         // --- ELEMENTI DEL DOM ---
         const searchForm = document.getElementById('search-form');
+        // Nuovo elemento Fieldset
+        const filtersFieldset = document.getElementById('filters-fieldset');
         const feedContainer = document.getElementById('feed-container');
         const esitoContainer = document.getElementById('esito-container');
         const mapContainer = document.getElementById('map-container');
@@ -699,28 +714,174 @@
 
         // --- DB ENTI (Simulato - Primi 20 come richiesto) ---
         const entiList = [
-            "\"\"\"CENTRO DI STUDI STORICO-LETTERARI NATALINO SAPEGNO\"\" ONLUS\"",
-            "AGENZIA REGIONALE DEI SEGRETARI DEGLI ENTI LOCALI DELLA VALLE D’AOSTA",
-            "ANPAS Comitato Regionale Valle d’Aosta Federazione Regionale del Soccorso VDA-ODV",
-            "AREA VDA - AGENZIA REGIONALE PER LE EROGAZIONE IN AGRICOLTURA DELLA REGIONE AUTONOMA VALLE D'AOSTA",
-            "ARER VALLE D'AOSTA",
-            "ARPA VALLE D'AOSTA",
-            "ASSOCIATION REGIONALE ELEVEURS VALDOTAINS (A.R.E.V.)",
-            "ASSOCIAZIONE FORTE DI BARD",
-            "ASSOCIAZIONE VALDOSTANA MAESTRI DI SCI - AVMS",
-            "AVDA SPA",
-            "AZIENDA PUBBLICI SERVIZI AOSTA SOCIETA PER AZIONI",
-            "AZIENDA USL VALLE D'AOSTA",
-            "C.M.F. SAINT-PIERRE VILLENEUVE",
-            "CAMERA VALDOSTANA DELLE IMPRESE E DELLE PROFESSIONI",
-            "CASA DI RIPOSO J. B. FESTAZ",
-            "CENTRO SERVIZI COURMAYEUR SRL",
-            "CERVIM",
-            "CHAMOIS SERVIZI SRL",
-            "COLLEGIO GEOMETRI E GEOMETRI LAUREATI DELLA VALLE D’AOSTA",
-            "COMUNE DI ALLEIN"
-            // Lista completa omessa per stabilità
-        ];
+    "\"\"\"CENTRO DI STUDI STORICO-LETTERARI NATALINO SAPEGNO\"\" ONLUS\"",
+    "AGENZIA REGIONALE DEI SEGRETARI DEGLI ENTI LOCALI DELLA VALLE D’AOSTA",
+    "ANPAS Comitato Regionale Valle d’Aosta Federazione Regionale del Soccorso VDA-ODV",
+    "AREA VDA - AGENZIA REGIONALE PER LE EROGAZIONE IN AGRICOLTURA DELLA REGIONE AUTONOMA VALLE D'AOSTA",
+    "ARER VALLE D'AOSTA",
+    "ARPA VALLE D'AOSTA",
+    "ASSOCIATION REGIONALE ELEVEURS VALDOTAINS (A.R.E.V.)",
+    "ASSOCIAZIONE FORTE DI BARD",
+    "ASSOCIAZIONE VALDOSTANA MAESTRI DI SCI - AVMS",
+    "AVDA SPA",
+    "AZIENDA PUBBLICI SERVIZI AOSTA SOCIETA PER AZIONI",
+    "AZIENDA USL VALLE D'AOSTA",
+    "C.M.F. SAINT-PIERRE VILLENEUVE",
+    "CAMERA VALDOSTANA DELLE IMPRESE E DELLE PROFESSIONI",
+    "CASA DI RIPOSO J. B. FESTAZ",
+    "CENTRO SERVIZI COURMAYEUR SRL",
+    "CERVIM",
+    "CHAMOIS SERVIZI SRL",
+    "COLLEGIO GEOMETRI E GEOMETRI LAUREATI DELLA VALLE D’AOSTA",
+    "COMUNE DI ALLEIN",
+    "COMUNE DI ANTEY SAINT ANDRE",
+    "COMUNE DI AOSTA",
+    "COMUNE DI ARNAD",
+    "COMUNE DI ARVIER",
+    "COMUNE DI AVISE",
+    "COMUNE DI AYAS",
+    "COMUNE DI AYMAVILLES",
+    "COMUNE DI BARD",
+    "COMUNE DI BIONAZ",
+    "COMUNE DI BRISSOGNE",
+    "COMUNE DI BRUSSON",
+    "COMUNE DI CHALLAND SAINT ANSELME",
+    "COMUNE DI CHALLAND SAINT VICTOR",
+    "COMUNE DI CHAMBAVE",
+    "COMUNE DI CHAMOIS",
+    "COMUNE DI CHAMPDEPRAZ",
+    "COMUNE DI CHAMPORCHER",
+    "COMUNE DI CHARVENSOD",
+    "COMUNE DI CHATILLON",
+    "COMUNE DI COGNE",
+    "COMUNE DI COURMAYEUR",
+    "COMUNE DI DONNAS",
+    "COMUNE DI DOUES",
+    "COMUNE DI EMARESE",
+    "COMUNE DI ETROUBLES",
+    "COMUNE DI FÉNIS",
+    "COMUNE DI FONTAINEMORE",
+    "COMUNE DI GABY",
+    "COMUNE DI GIGNOD",
+    "COMUNE DI GRESSAN",
+    "COMUNE DI GRESSONEY-LA-TRINITÉ",
+    "COMUNE DI GRESSONEY-SAINT-JEAN",
+    "COMUNE DI HONE",
+    "COMUNE DI INTROD",
+    "COMUNE DI ISSIME",
+    "COMUNE DI ISSOGNE",
+    "COMUNE DI JOVENCAN",
+    "COMUNE DI LA MAGDELEINE",
+    "COMUNE DI LA SALLE",
+    "COMUNE DI LILLIANES",
+    "COMUNE DI MONTJOVET",
+    "COMUNE DI MORGEX",
+    "COMUNE DI NUS",
+    "COMUNE DI OLLOMONT",
+    "COMUNE DI OYACE",
+    "COMUNE DI PERLOZ",
+    "COMUNE DI POLLEIN",
+    "COMUNE DI PONTBOSET",
+    "COMUNE DI PONTEY",
+    "COMUNE DI PONT-SAINT-MARTIN",
+    "COMUNE DI PRE'-SAINT-DIDIER",
+    "COMUNE DI QUART",
+    "COMUNE DI RHEMES-NOTRE-DAME",
+    "COMUNE DI RHEMES-SAINT-GEORGES",
+    "COMUNE DI ROISAN",
+    "COMUNE DI SAINT DENIS",
+    "COMUNE DI SAINT-CHRISTOPHE",
+    "COMUNE DI SAINT-MARCEL",
+    "COMUNE DI SAINT-NICOLAS",
+    "COMUNE DI SAINT-OYEN",
+    "COMUNE DI SAINT-PIERRE",
+    "COMUNE DI SAINT-RHÉMY-EN-BOSSES",
+    "COMUNE DI SAINT-VINCENT",
+    "COMUNE DI SARRE",
+    "COMUNE DI TORGNON",
+    "COMUNE DI VALGRISENCHE",
+    "COMUNE DI VALPELLINE",
+    "COMUNE DI VALSAVARENCHE",
+    "COMUNE DI VALTOURNENCHE",
+    "COMUNE DI VERRAYES",
+    "COMUNE DI VERRES",
+    "COMUNE DI VILLENEUVE",
+    "COMUNE LA THUILE",
+    "CONSIGLIO REGIONALE DELLA VALLE D'AOSTA",
+    "CONSORZIO DEGLI ENTI LOCALI DELLA VALLE D'AOSTA (CELVA)",
+    "CONSORZIO DEI COMUNI DELLA VALLE D'AOSTA – B.I.M. DORA BALTEA",
+    "CONSORZIO REGIONALE PER LA TUTELA, L’INCREMENTO E L’ESERCIZIO DELLA PESCA IN VALLE D’AOSTA",
+    "CONVITTO REGIONALE FEDERICO CHABOD",
+    "CRIA (CENTRO REGIONALE ISTRUZIONE PER ADULTI)",
+    "Ente Parco Nazionale Gran Paradiso",
+    "ENVERS SRL",
+    "FINAOSTA S.P.A.",
+    "FONDAZIONE CENTRO INTERNAZIONALE SU DIRITTO SOCIETA' E ECONOMIA",
+    "FONDAZIONE CLÉMENT FILLIETROZ-ONLUS",
+    "FONDAZIONE DELLA REGIONE AUTONOMA VALLE D’AOSTA PER LA RICERCA SUL CANCRO",
+    "FONDAZIONE GRAN PARADISO – GRAND PARADIS",
+    "FONDAZIONE LICEO LINGUISTICO COURMAYEUR",
+    "FONDAZIONE MARIA IDA VIGLINO PER LA CULTURA MUSICALE",
+    "FONDAZIONE MONTAGNA SICURA",
+    "FONDAZIONE PER LA FORMAZIONE PROFESSIONALE TURISTICA",
+    "FONDAZIONE SISTEMA OLLIGNAN",
+    "FONDAZIONE TROFEO MEZZALAMA",
+    "GRESSONEY SPORT HAUS S.R.L. A SOCIO UNICO",
+    "GRUPPO DI AZIONE LOCALE VALLE D’AOSTA",
+    "IN.VA. S.P.A.",
+    "INSTITUT AGRICOLE REGIONAL",
+    "INSTITUT VALDOTAINE DE L'ARTISAT DE TRADITION",
+    "ISILTP ISTITUZIONE SCOLASTICA DI ISTRUZIONE LICEALE TECNICA PROFESSIONALE",
+    "ISTITUTO MUSICALE PAREGGIATO DELLA VALLE D'AOSTA",
+    "ISTITUTO PER IL SISTEMA PREVIDENZIALE DEI CONSIGLIERI REGIONALI",
+    "ISTITUTO REGIONALE A. GERVASONE",
+    "\"ISTITUTO TECNICO PROFESSIONALE REGIONALE \"\"CORRADO GEX\"\"\"",
+    "ISTITUZIONE SCOLASTICA “MONT EMILIUS 3”",
+    "ISTITUZIONE SCOLASTICA ABBÉ J.M.TRÈVES",
+    "ISTITUZIONE SCOLASTICA ABBÉ PROSPER DUC",
+    "\"ISTITUZIONE SCOLASTICA DI ISTRUZIONE TECNICA E PROFESSIONALE \"\"INNOCENT MANZETTI\"\"\"",
+    "ISTITUZIONE SCOLASTICA ELIO REINOTTI",
+    "ISTITUZIONE SCOLASTICA EMILE LEXERT",
+    "ISTITUZIONE SCOLASTICA EUGENIA MARTINET",
+    "ISTITUZIONE SCOLASTICA JEAN- BAPTISTE CERLOGNE",
+    "ISTITUZIONE SCOLASTICA LUIGI BARONE",
+    "ISTITUZIONE SCOLASTICA LUIGI EINAUDI",
+    "ISTITUZIONE SCOLASTICA MARIA IDA VIGLINO",
+    "ISTITUZIONE SCOLASTICA MONT EMILIUS 2",
+    "ISTITUZIONE SCOLASTICA OTTAVIO JACQUEMET",
+    "ISTITUZIONE SCOLASTICA SAINT ROCH",
+    "ISTITUZIONE SCOLASTICA SAN FRANCESCO",
+    "ISTITUZIONE SCOLASTICA UNITÉ DES COMMUNES VALDÔTAINES GRAND COMBIN - GIGNOD",
+    "ISTITUZIONE SCOLASTICA UNITÉ DES COMMUNES VALDÔTAINES MONT ROSE A",
+    "ISTITUZIONE SCOLASTICA UNITÉ DES COMMUNES VALDÔTAINES MONT-EMILIUS 1",
+    "ISTITUZIONE SCOLASTICA VALDIGNE MONT-BLANC",
+    "LICEO CLASSICO, ARTISTICO E MUSICALE",
+    "LICEO DELLE SCIENZE UMANE E SCIENTIFICO REGINA MARIA ADELAIDE",
+    "\"LICEO SCIENTIFICO E LINGUISTICO \"\"E. BÉRARD\"\"\"",
+    "ORDINE DEGLI ARCHITETTI, PIANIFICATORI, PAESAGGISTI E CONSERVATORI DELLA REGIONE AUTONOMA VALLE D'AOSTA",
+    "PARCO NATURALE MONT AVIC",
+    "REGIONE AUTONOMA VALLE D'AOSTA",
+    "SERVICES DES EAUX VALDÔTAINES S.R.L.*BETA*",
+    "SITRASB S.P.A.",
+    "SOCIETÀ DI SERVIZI VALLE D'AOSTA S.P.A. in francese SOCIÉTÉ DES SERVICES VALLÉE D'AOSTE S.P.A.",
+    "SOCIÉTÉ INFRASTRUCTURES VALDÔTAINES S.R.L.",
+    "STRUTTURA AFFARI DI PREFETTURA DELLA REGIONE AUTONOMA VALLE D'AOSTA",
+    "STRUTTURA VALLE D'AOSTA SRL",
+    "SUB-ATO MONTE EMILIUS PIANA D'AOSTA",
+    "SVAP S.r.l. a S.U.",
+    "UFFICIO REGIONALE DEL TURISMO",
+    "UNIONCAMERE PIEMONTE",
+    "Unité des Communes valdôtaines Evançon",
+    "Unité des Communes valdôtaines Grand-Combin",
+    "Unité des Communes valdôtaines Grand-Paradis",
+    "Unité des Communes valdôtaines Mont-Cervin",
+    "Unité des Communes valdôtaines Mont-Émilius",
+    "Unité des Communes valdôtaines Mont-Rose",
+    "Unité des Communes valdôtaines Valdigne - Mont-Blanc",
+    "Unité des Communes valdôtaines Walser",
+    "UNIVERSITÀ DELLA VALLE D'AOSTA",
+    "V.I.T.A. S.p.A."
+];
 
         // --- LISTA COMPLETA COORDINATE 74 COMUNI VDA ---
         const comuniVdA = {
@@ -846,6 +1007,14 @@
                 enteProponenteSelect.insertAdjacentHTML('beforeend', optionHtml);
                 enteAppaltanteSelect.insertAdjacentHTML('beforeend', optionHtml);
             });
+        }
+
+        // --- NUOVE FUNZIONI PER DISABILITARE/ABILITARE I FILTRI ---
+        function disableFilters() {
+            filtersFieldset.disabled = true;
+        }
+        function enableFilters() {
+            filtersFieldset.disabled = false;
         }
 
 
@@ -1216,6 +1385,7 @@
             }
             resultsStatusContainer.innerHTML = '';
             paginationControls.style.display = 'none';
+            disableFilters(); // <-- DISABILITA I FILTRI
             
             const feedUrl = buildUrl();
             try {
@@ -1231,6 +1401,8 @@
                 paginationControls.style.display = 'flex';
             } catch (error) {
                 handleError(error);
+            } finally {
+                enableFilters(); // <-- RIATTIVA I FILTRI (sia in caso di successo che di errore)
             }
         }
         
@@ -1245,6 +1417,7 @@
             esitoContainer.innerHTML = `<div class="loading-container"><div class="loading-spinner"></div><div class="loading-text">Ricerca esito per CIG: ${cig}...</div></div>`;
             resultsStatusContainer.innerHTML = '';
             paginationControls.style.display = 'none';
+            disableFilters(); // <-- DISABILITA I FILTRI
             
             const feedUrl = buildEsitoUrl(cig);
             try {
@@ -1284,6 +1457,8 @@
             } catch (error) {
                 esitoContainer.innerHTML = `<div class="error-message">Impossibile caricare il feed. I servizi esterni non rispondono.<br><button id="retry-btn-esito">Riprova</button></div>`;
                 document.getElementById('retry-btn-esito').addEventListener('click', fetchEsitoByCig);
+            } finally {
+                enableFilters(); // <-- RIATTIVA I FILTRI (sia in caso di successo che di errore)
             }
         }
 
@@ -1292,6 +1467,7 @@
             let msg = "Impossibile caricare il feed. I servizi esterni non rispondono.";
             feedContainer.innerHTML = `<div class="error-message">${msg}<br><button id="retry-btn">Riprova</button></div>`;
             mapLoadingOverlay.classList.remove('active');
+            enableFilters(); // <-- RIATTIVA I FILTRI IN CASO DI ERRORE
             document.getElementById('retry-btn').addEventListener('click', fetchFeed);
         }
 
@@ -1336,7 +1512,7 @@
             
             // Ricarica i dati solo se non siamo nel tab esito
             if (currentView !== 'cerca-esito') {
-                fetchFeed();
+                fetchFeed(); // Questo chiamerà disableFilters()
             }
         });
 
