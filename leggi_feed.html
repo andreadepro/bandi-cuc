@@ -544,7 +544,7 @@
             <div id="map-container"></div>
         </div>
 
-        <!-- Contenitore per i risultati della ricerca Esiti -->
+        <!-- Contenitore per i risultati della ricerca Esiti (usiamo feedContainer con stile specifico) -->
         <div id="esito-container"></div>
 
         <div id="feed-container">
@@ -1086,9 +1086,16 @@
         async function fetchProxy(url) {
             const ts = Date.now();
             const TIMEOUT_MS = 30000; 
+            
+            // Lista di proxy ORDINATA per affidabilità:
+            // 1. corsproxy.io: Di solito il più veloce per raw XML
+            // 2. allorigins.win: Molto affidabile, ma richiede parsing JSON
+            // 3. codetabs: Buona alternativa
+            // 4. thingproxy: Spesso funziona se gli altri falliscono
+            // 5. cors.eu.org: Lento ma spesso aperto
             const proxies = [
-                { url: `https://api.allorigins.win/get?url=${encodeURIComponent(url)}&_t=${ts}`, type: 'json' },
                 { url: `https://corsproxy.io/?${encodeURIComponent(url)}`, type: 'text' },
+                { url: `https://api.allorigins.win/get?url=${encodeURIComponent(url)}&_t=${ts}`, type: 'json' },
                 { url: `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`, type: 'text'},
                 { url: `https://thingproxy.freeboard.io/fetch/${url}`, type: 'text' },
                 { url: `https://cors.eu.org/${url}`, type: 'text' }
