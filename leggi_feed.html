@@ -10,232 +10,267 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
     
-    <!-- MODIFICA: Spostato JS in <head> per fixare errore di caricamento -->
-    <!-- Leaflet JS per la mappa -->
+    <!-- JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-    <!-- Leaflet MarkerCluster JS (deve essere DOPO leaflet.js) -->
     <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
 
     <style>
         :root {
-            --primary-color: #0056b3; /* Un blu più professionale */
+            --primary-color: #0056b3;
+            --primary-hover: #004494;
             --secondary-color: #6c757d;
             --success-color: #28a745;
-            --danger-color: #dc3545; /* Rosso per scadenze/allarmi */
+            --danger-color: #dc3545;
             --background-light: #f8f9fa;
             --border-color: #e9ecef;
-            --card-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            --text-color: #333;
+            --card-shadow: 0 4px 6px rgba(0,0,0,0.05);
             --hover-shadow: 0 10px 15px rgba(0,0,0,0.1);
         }
 
         body {
             font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
             line-height: 1.6;
-            background-color: #eef2f7; /* Sfondo leggermente più colorato */
-            color: #333;
+            background-color: #eef2f7;
+            color: var(--text-color);
             margin: 0;
             padding: 20px;
         }
         .container {
-            max-width: 900px; /* Leggermente più largo per le card */
+            max-width: 950px;
             margin: 0 auto 25px;
             padding: 25px;
             background-color: #fff;
             border-radius: 12px;
-            box-shadow: 0 2px 15px rgba(0,0,0,0.05);
+            box-shadow: 0 2px 20px rgba(0,0,0,0.08);
         }
         h1 {
             text-align: center;
             color: var(--primary-color);
-            margin-bottom: 30px;
-            font-weight: 600;
+            margin-bottom: 20px;
+            font-weight: 700;
+            font-size: 1.8rem;
         }
 
-        /* --- Stili Form di Ricerca --- */
+        /* --- MODE SWITCHER --- */
+        .mode-switcher {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+        .mode-btn {
+            padding: 10px 25px;
+            font-size: 1rem;
+            font-weight: 600;
+            border: 2px solid var(--primary-color);
+            background-color: transparent;
+            color: var(--primary-color);
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 140px;
+        }
+        .mode-btn:hover { background-color: rgba(0, 86, 179, 0.05); }
+        .mode-btn.active {
+            background-color: var(--primary-color);
+            color: white;
+            box-shadow: 0 4px 10px rgba(0, 86, 179, 0.2);
+        }
+
+        /* --- FORM DI RICERCA COMPATTO --- */
         #search-form {
             background-color: var(--background-light);
-            padding: 25px;
+            padding: 0; /* Padding spostato sugli elementi interni */
             border-radius: 10px;
             border: 1px solid var(--border-color);
+            margin-bottom: 25px;
+            overflow: hidden; /* Per contenere l'animazione */
         }
-        /* NUOVO WRAPPER PER LE CATEGORIE */
-        .category-wrapper {
-            margin-bottom: 25px; /* Spazio dopo l'intero blocco filtri */
+        
+        /* Sezione principale (sempre visibile) */
+        .search-primary-section {
+            padding: 20px 20px 5px 20px;
         }
-        .category-section { 
-            margin-bottom: 15px; /* Spazio tra i due gruppi di categorie */
+
+        .search-primary-row {
+            display: flex;
+            gap: 15px;
+            align-items: flex-end;
+            flex-wrap: wrap;
         }
-        .category-section:last-child {
-            margin-bottom: 0; /* Rimuovi spazio extra */
+        .search-primary-row .form-group {
+            margin-bottom: 0;
         }
+        .flex-grow { flex-grow: 1; min-width: 250px; }
+        .flex-fixed { flex-basis: 180px; flex-shrink: 0; }
+
+        /* Bottone Cerca */
+        .btn-search {
+            padding: 10px 35px;
+            background-color: var(--success-color);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            height: 46px; 
+            transition: background-color 0.2s;
+            font-size: 1.05rem;
+        }
+        .btn-search:hover { background-color: #218838; }
+        
+        /* --- NUOVA BARRA TOGGLE ANIMATA --- */
+        #advanced-toggle-bar {
+            width: 100%;
+            text-align: center;
+            cursor: pointer;
+            padding: 10px 0;
+            background-color: #fff; /* Leggermente diverso dallo sfondo del form */
+            border-top: 1px solid #eee;
+            color: var(--primary-color);
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+            margin-top: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            user-select: none;
+        }
+        #advanced-toggle-bar:hover {
+            background-color: #f1f3f5;
+            color: var(--primary-hover);
+        }
+        .toggle-icon {
+            display: inline-block;
+            transition: transform 0.3s ease;
+            font-size: 0.8rem;
+        }
+        #advanced-toggle-bar.open .toggle-icon {
+            transform: rotate(180deg);
+        }
+        #advanced-toggle-bar.open {
+            border-bottom: 1px solid #eee; /* Separatore quando aperto */
+            background-color: #f8f9fa;
+        }
+
+
+        /* --- PANNELLO AVANZATO (Nascosto di default) --- */
+        #advanced-filters {
+            display: none; /* Nascosto inizialmente */
+            padding: 20px;
+            background-color: #fff; /* Sfondo bianco per stacco */
+            animation: slideDown 0.3s ease-out;
+        }
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Griglie interne pannello avanzato */
+        .category-section { margin-bottom: 20px; }
         .category-label {
             display: block;
-            margin-bottom: 12px;
-            font-weight: 600;
-            color: #495057;
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: #555;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
-        .category-pills { display: flex; flex-wrap: wrap; gap: 10px; }
+        .category-pills { display: flex; flex-wrap: wrap; gap: 8px; }
         .category-pill {
             background-color: #fff;
             border: 1px solid #ced4da;
-            border-radius: 50px;
-            padding: 8px 18px;
+            border-radius: 20px;
+            padding: 6px 14px;
             cursor: pointer;
-            font-size: 0.9rem;
-            transition: all 0.2s ease-in-out;
-            color: #495057;
-            font-weight: 500;
+            font-size: 0.85rem;
+            color: #555;
+            transition: all 0.2s;
         }
-        .category-pill:hover {
-            background-color: #e2e6ea;
-            border-color: #adb5bd;
-        }
+        .category-pill:hover { background-color: #e9ecef; border-color: #adb5bd; }
         .category-pill.active {
             background-color: var(--primary-color);
             color: white;
             border-color: var(--primary-color);
-            box-shadow: 0 2px 5px rgba(0, 86, 179, 0.3);
-        }
-        #search-fields {
-            display: grid;
-            /* Modificato per 2 campi sulla prima riga */
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
-            gap: 20px;
-            margin-bottom: 25px;
-        }
-        /* NUOVO CSS PER I WRAPPER DEI CAMPI */
-        .ente-fields-wrapper,
-        .range-fields-wrapper { /* AGGIUNTO */
-            /* Occupa l'intera larghezza della griglia principale */
-            grid-column: 1 / -1; 
-            display: grid;
-            /* Quattro colonne fisse per i range */
-            grid-template-columns: repeat(4, 1fr);
-            gap: 20px;
+            box-shadow: 0 2px 4px rgba(0,86,179,0.25);
         }
 
+        .advanced-grid-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        /* STILE AGGIORNATO PER PULSANTE AZZERA FILTRI */
+        .advanced-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end; /* Allineamento in basso */
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px dashed #dee2e6;
+        }
+        #reset-filters-btn {
+            background-color: #fff;
+            border: 1px solid var(--danger-color);
+            color: var(--danger-color);
+            text-decoration: none;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 600;
+            padding: 10px 20px;
+            border-radius: 6px;
+            transition: all 0.2s;
+            height: 46px; /* Stessa altezza degli altri input */
+        }
+        #reset-filters-btn:hover { 
+            background-color: var(--danger-color); 
+            color: white;
+        }
+
+        /* Input Styles */
         .form-group { display: flex; flex-direction: column; }
         .form-group label {
-            margin-bottom: 8px;
+            margin-bottom: 6px;
             font-weight: 600;
-            font-size: 0.9rem;
-            color: #495057;
+            font-size: 0.85rem;
+            color: #555;
         }
-        /* Stile unificato per input e select */
         .form-group input, .form-group select {
-            padding: 12px;
+            padding: 10px 12px;
             border: 1px solid #ced4da;
             border-radius: 6px;
-            font-size: 1rem;
-            transition: border-color 0.2s;
+            font-size: 0.95rem;
             background-color: #fff;
-            height: 48px; /* Altezza fissa per allineamento */
-            box-sizing: border-box; /* Include padding nell'altezza */
-            width: 100%; /* Assicura che riempiano il contenitore grid */
-        }
-        /* Stile per il <select> per farlo assomigliare all'input */
-        .form-group select {
-            -webkit-appearance: none;
-            -moz-appearance: none;
-            appearance: none;
-            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
-            background-repeat: no-repeat;
-            background-position: right 0.75rem center;
-            background-size: 16px 12px;
+            height: 46px; /* Altezza coerente */
+            box-sizing: border-box;
+            width: 100%;
         }
         .form-group input:focus, .form-group select:focus {
             outline: none;
             border-color: var(--primary-color);
             box-shadow: 0 0 0 3px rgba(0, 86, 179, 0.1);
         }
-        /* Correzione per input tipo 'date' */
-        .form-group input[type="date"] {
-            padding-right: 0.75rem; /* Rimuovi padding extra su input date */
-        }
-        
-        /* Stile per il fieldset (contenitore filtri) */
-        fieldset {
-            border: none;
-            padding: 0;
-            margin: 0;
-            min-width: 0; /* Fix per layout in Firefox */
-        }
-        /* Quando disabilitato, rendilo semi-trasparente */
-        fieldset:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
 
-        #controls-container {
-            display: flex;
-            gap: 10px; /* Ridotto il gap per far stare tutto */
-            align-items: flex-end;
-            justify-content: space-between; /* Spazia i controlli */
-        }
-        #controls-container .form-group {
-             flex-grow: 1; /* Spinge i bottoni a destra */
-        }
-        #controls-container button[type="submit"] {
-            padding: 12px 25px; /* Modificato padding */
-            border: none;
-            background-color: var(--success-color);
-            color: white;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 1rem;
-            font-weight: 600;
-            transition: background-color 0.2s, transform 0.1s;
-            height: 48px; /* Allinea con gli input */
-            flex-shrink: 0; /* Non far rimpicciolire i bottoni */
-        }
-        #controls-container button[type="submit"]:hover {
-            background-color: #218838;
-            transform: translateY(-1px);
-        }
-        #controls-container button[type="submit"]:active { transform: translateY(1px); }
-
-        /* NUOVO STILE PER IL RESET */
-        #reset-filters-btn {
-            padding: 12px 25px;
-            border: none;
-            background-color: var(--secondary-color);
-            color: white;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 1rem;
-            font-weight: 600;
-            transition: background-color 0.2s, transform 0.1s;
-            height: 48px;
-            flex-shrink: 0;
-        }
-        #reset-filters-btn:hover {
-            background-color: #5a6268;
-        }
-
-        /* --- Logica per nascondere i filtri nel tab "Cerca Esito" --- */
-        #search-form.esito-mode .category-wrapper, /* Modificato */
-        #search-form.esito-mode #oggetto-input-group,
-        #search-form.esito-mode .ente-fields-wrapper, /* CORRETTO */
-        #search-form.esito-mode .range-fields-wrapper, /* AGGIUNTO */
-        #search-form.esito-mode #num-results-group {
-            display: none;
-        }
-        #search-form.esito-mode #search-fields {
-            grid-template-columns: 1fr; /* Il CIG prende tutta la larghezza */
-        }
-        #search-form.esito-mode #controls-container {
-            justify-content: flex-end; /* Sposta il pulsante a destra */
-        }
+        fieldset { border: none; padding: 0; margin: 0; min-width: 0; }
+        fieldset:disabled { opacity: 0.6; cursor: not-allowed; }
 
         /* --- Stili Tabs --- */
         .tabs {
             display: flex;
-            flex-wrap: wrap; /* Per mobile */
+            flex-wrap: wrap;
             border-bottom: 2px solid #dee2e6;
             margin-bottom: 25px;
         }
         .tab-link {
-            padding: 12px 20px; /* Leggermente meno padding per 4 tab */
+            padding: 12px 20px;
             cursor: pointer;
             border: none;
             background: none;
@@ -244,8 +279,8 @@
             color: var(--secondary-color);
             position: relative;
             transition: color 0.3s;
+            flex-grow: 1;
             text-align: center;
-            flex-grow: 1; /* Per mobile */
         }
         .tab-link::after {
             content: '';
@@ -259,8 +294,8 @@
         }
         .tab-link.active { color: var(--primary-color); font-weight: 600; }
         .tab-link.active::after { background-color: var(--primary-color); }
-
-        /* --- STILI CARD (Feed Item) --- */
+        
+        /* --- STILI CARD --- */
         .feed-item {
             background-color: #fff;
             border: 1px solid var(--border-color);
@@ -268,22 +303,14 @@
             padding: 25px;
             margin-bottom: 20px;
             transition: all 0.3s ease;
-            position: relative; /* Per posizionare elementi assoluti se necessario */
         }
-        /* Effetto hover per far sembrare le card "cliccabili" o importanti */
         .feed-item:hover {
             box-shadow: var(--hover-shadow);
             transform: translateY(-3px);
             border-color: #d6d8db;
         }
 
-        /* Stile specifico per la vista SINTETICA */
-        .synthetic-card {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 15px;
-        }
-        /* Intestazione della card sintetica */
+        /* Synthetic Card Layout */
         .synthetic-header {
             display: flex;
             justify-content: space-between;
@@ -292,254 +319,84 @@
             padding-bottom: 15px;
             margin-bottom: 15px;
         }
-        .synthetic-title {
-            font-size: 1.3rem;
-            color: #2c3e50;
-            margin: 0;
-            font-weight: 700;
-            flex-grow: 1; /* Prende lo spazio disponibile */
-            margin-right: 15px;
-        }
-        .synthetic-badges {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-end;
-            gap: 8px;
-            flex-shrink: 0; /* Non si restringe */
-        }
-        .badge {
-            display: inline-block;
-            padding: 4px 10px;
-            border-radius: 4px;
-            font-size: 0.8rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
+        .synthetic-title { font-size: 1.25rem; color: #2c3e50; margin: 0; font-weight: 700; flex-grow: 1; margin-right: 15px; }
+        .synthetic-badges { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex-shrink: 0; }
+        .badge { padding: 4px 10px; border-radius: 4px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; }
         .badge-cig { background-color: #e9ecef; color: #495057; }
-        .badge-esito { background-color: #d4edda; color: #155724; } /* Verde per esito positivo/pubblicato */
+        .badge-esito { background-color: #d4edda; color: #155724; }
         
-        /* Corpo della card sintetica */
-        .synthetic-body {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); /* Griglia responsive interna */
-            gap: 20px;
-        }
-        .info-group {
-            display: flex;
-            flex-direction: column;
-        }
-        .info-label {
-            font-size: 0.85rem;
-            text-transform: uppercase;
-            color: var(--secondary-color);
-            font-weight: 700;
-            margin-bottom: 5px;
-        }
-        .info-value {
-            font-size: 1rem;
-            color: #212529;
-        }
-        /* Stili specifici per alcuni valori */
+        .synthetic-body { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; }
+        .info-group { display: flex; flex-direction: column; }
+        .info-label { font-size: 0.8rem; text-transform: uppercase; color: var(--secondary-color); font-weight: 700; margin-bottom: 4px; }
+        .info-value { font-size: 0.95rem; color: #212529; }
         .info-value.ente { font-weight: 600; color: var(--primary-color); }
-        .info-value.importo {
-            font-size: 1.2rem;
-            font-weight: 700;
-            color: var(--success-color); /* Verde soldi */
-        }
-        .info-value.oggetto {
-            line-height: 1.5;
-            color: #555;
-        }
-        .info-value.scadenza {
-            font-weight: 700;
-            color: var(--danger-color); /* Rosso per evidenziare la scadenza */
-        }
-
-        /* Footer della card con il pulsante */
-        .synthetic-footer {
-            margin-top: 20px;
-            text-align: right;
-        }
+        .info-value.importo { font-size: 1.1rem; font-weight: 700; color: var(--success-color); }
+        .info-value.oggetto { line-height: 1.5; color: #555; }
+        .info-value.scadenza { font-weight: 700; color: var(--danger-color); }
+        
+        .synthetic-footer { margin-top: 20px; text-align: right; }
         .btn-details {
             display: inline-block;
-            padding: 10px 25px;
+            padding: 8px 20px;
             background-color: var(--primary-color);
             color: white;
             text-decoration: none;
             border-radius: 6px;
             font-weight: 600;
+            font-size: 0.95rem;
             transition: background-color 0.2s;
         }
-        .btn-details:hover { background-color: #004494; text-decoration: none; }
+        .btn-details:hover { background-color: var(--primary-hover); }
 
-        /* Stile per la vista COMPLETA (più simile a una lista tecnica) */
-        .full-card h2 { font-size: 1.4em; margin-top: 0; color: var(--primary-color); }
+        /* Full Card Layout */
+        .full-card h2 { font-size: 1.3rem; margin-top: 0; color: var(--primary-color); }
         .full-card h2 a { text-decoration: none; color: inherit; }
-        .full-card h2 a:hover { text-decoration: underline; }
-        .full-card dl { display: grid; grid-template-columns: auto 1fr; gap: 10px 20px; margin: 0; }
+        .full-card dl { display: grid; grid-template-columns: auto 1fr; gap: 8px 15px; margin: 0; font-size: 0.95rem; }
         .full-card dt { font-weight: 700; color: #555; text-align: right; padding-right: 10px; border-right: 2px solid #eee; }
         .full-card dd { margin: 0; word-break: break-word; }
 
-        /* --- Stili per Tab "Cerca Esito CIG" --- */
-        #esito-container { display: none; }
-        #esito-container ul { list-style: none; padding-left: 0; }
+        /* Esito List Layout */
+        #esito-container ul { list-style: none; padding: 0; }
         #esito-container li { 
-            background: #fdfdfd; 
-            border: 1px solid #eee; 
-            padding: 20px; 
-            margin-bottom: 15px; 
-            border-radius: 8px; 
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            transition: all 0.2s ease;
-            /* Modifica per pulsante */
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 20px;
+            background: #fff; border: 1px solid var(--border-color); padding: 20px; margin-bottom: 15px; 
+            border-radius: 8px; transition: all 0.2s; display: flex; justify-content: space-between; align-items: center; gap: 20px;
         }
-        #esito-container li:hover {
-             border-color: #ddd;
-             box-shadow: 0 4px 8px rgba(0,0,0,0.07);
-        }
-        #esito-container .esito-info {
-            flex-grow: 1;
-        }
-        #esito-container .esito-info strong { 
-            font-weight: 600; 
-            font-size: 1.1rem;
-            color: var(--primary-color); 
-        }
-         #esito-container .esito-info p {
-             margin: 8px 0 0 0;
-             font-size: 0.9rem;
-             color: #555;
-         }
-         #esito-container .esito-link .btn-details {
-             padding: 8px 20px; /* Pulsante più piccolo */
-             font-size: 0.9rem;
-         }
-
-
-        /* --- Altri Stili --- */
-        #pagination-container { display: flex; justify-content: center; gap: 15px; margin-top: 30px; }
-        #pagination-container button {
-            padding: 10px 20px;
-            cursor: pointer;
-            background-color: white;
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            transition: all 0.2s;
-        }
-        #pagination-container button:hover:not(:disabled) { background-color: #e9ecef; border-color: #adb5bd; }
+        #esito-container li:hover { box-shadow: var(--hover-shadow); border-color: #d6d8db; }
+        #esito-container .esito-info strong { font-size: 1.1rem; color: var(--primary-color); display: block; margin-bottom: 5px;}
+        
+        /* Utilities */
+        #pagination-container { display: flex; justify-content: center; gap: 10px; margin-top: 30px; }
+        #pagination-container button { padding: 8px 16px; background: #fff; border: 1px solid var(--border-color); border-radius: 6px; cursor: pointer; }
         #pagination-container button:disabled { opacity: 0.5; cursor: not-allowed; }
         
-        /* --- STILI DI CARICAMENTO E ERRORE --- */
-        .loading-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 50px 20px;
-            color: var(--secondary-color);
-        }
-        .loading-spinner {
-            border: 5px solid #f3f3f3;
-            border-top: 5px solid var(--primary-color);
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            animation: spin 1s linear infinite;
-            margin-bottom: 20px;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        .loading-text {
-            font-size: 1.2rem;
-            font-weight: 500;
-        }
-
-        .error-message { text-align: center; font-size: 1.2em; color: var(--secondary-color); padding: 40px; }
-        .error-message { color: #dc3545; background-color: #fff5f5; border-radius: 8px; border: 1px solid #f5c6cb; }
-        #results-status { text-align: center; font-style: italic; color: var(--secondary-color); margin-bottom: 20px; }
-        #retry-btn { margin-top: 15px; padding: 10px 25px; font-size: 1em; cursor: pointer; background-color: var(--primary-color); color: white; border: none; border-radius: 6px; }
+        .loading-container { display: flex; flex-direction: column; align-items: center; padding: 60px 20px; color: var(--secondary-color); }
+        .loading-spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--primary-color); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 15px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         
-        /* --- STILI MAPPA --- */
-        #map-wrapper {
-            position: relative; /* Necessario per posizionare l'overlay di caricamento sopra */
-        }
-        #map-container {
-            height: 600px; /* Altezza fissa per la mappa */
-            width: 100%;
-            border-radius: 10px;
-            border: 1px solid var(--border-color);
-            margin-bottom: 20px;
-            /* Nascondi di default, mostrato via JS quando attivo il tab */
-            display: none; 
-        }
-        /* Assicura che la mappa sia visibile quando il tab è attivo */
-        #map-container.active {
-            display: block;
-        }
-        /* Overlay di caricamento per la mappa */
-        #map-loading-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(255, 255, 255, 0.8);
-            z-index: 1000; /* Assicurati che sia sopra la mappa Leaflet */
-            display: none; /* Nascosto di default */
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            border-radius: 10px;
-        }
-        #map-loading-overlay.active {
-            display: flex;
-        }
+        .error-message { text-align: center; padding: 30px; color: #721c24; background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 8px; }
+        #results-status { text-align: center; font-style: italic; color: var(--secondary-color); margin-bottom: 15px; font-size: 0.9rem; }
 
-        /* Stili per il popup della mappa */
-        .leaflet-popup-content {
-            font-family: 'Segoe UI', sans-serif;
-            line-height: 1.4;
-        }
-        .leaflet-popup-content b {
-            color: var(--primary-color);
-            font-size: 1.1em;
-        }
-        .leaflet-popup-content a {
-            display: inline-block;
-            margin-top: 8px;
-            color: white;
-            background-color: var(--primary-color);
-            padding: 4px 10px;
-            border-radius: 4px;
-            text-decoration: none;
-            font-size: 0.9em;
-        }
-        .leaflet-popup-content a:hover {
-            background-color: #004494;
-        }
+        /* Mappa */
+        #map-wrapper { position: relative; display: none; }
+        #map-container { height: 500px; width: 100%; border-radius: 10px; border: 1px solid var(--border-color); margin-bottom: 20px; }
+        #map-loading-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.85); z-index: 1000; display: none; flex-direction: column; align-items: center; justify-content: center; border-radius: 10px; }
+        #map-loading-overlay.active { display: flex; }
+        .leaflet-popup-content { line-height: 1.4; }
+        .leaflet-popup-content a { display: inline-block; margin-top: 8px; color: white; background: var(--primary-color); padding: 4px 10px; border-radius: 4px; text-decoration: none; }
 
-
-        /* Media query per schermi piccoli */
         @media (max-width: 768px) {
-            .tabs { flex-direction: column; }
-            .tab-link { font-size: 0.9rem; padding: 12px 10px;}
-            #search-fields { grid-template-columns: 1fr; } /* Campi di ricerca in colonna */
-            .ente-fields-wrapper, .range-fields-wrapper { grid-template-columns: 1fr; } /* Anche i wrapper in colonna */
+            .search-primary-row { flex-direction: column; align-items: stretch; }
+            .flex-fixed { flex-basis: auto; }
             .synthetic-header { flex-direction: column; }
-            .synthetic-badges { align-items: flex-start; margin-top: 15px; flex-direction: row; }
+            .synthetic-badges { align-items: flex-start; margin-top: 10px; flex-direction: row; }
             .full-card dl { grid-template-columns: 1fr; }
-            .full-card dt { text-align: left; border-right: none; border-bottom: 1px solid #eee; padding-bottom: 5px; }
-            .full-card dd { margin-bottom: 15px; padding-left: 10px; }
-            #controls-container { flex-direction: column; align-items: stretch; }
-            #controls-container button[type="submit"] { width: 100%; }
-             #map-container { height: 400px; } /* Mappa più piccola su mobile */
+            .full-card dt { text-align: left; border-right: none; border-bottom: 1px solid #eee; padding-bottom: 5px; margin-bottom: 5px;}
+            .range-fields-wrapper { grid-template-columns: 1fr 1fr; }
+            #esito-container li { flex-direction: column; align-items: flex-start; }
+            #esito-container .esito-link { width: 100%; text-align: right; }
+            /* Responsive bottoni advanced footer */
+            .advanced-footer { flex-direction: column; align-items: stretch; gap: 15px; }
+            .advanced-footer .form-group { width: 100% !important; }
         }
     </style>
 </head>
@@ -547,104 +404,117 @@
 
     <div class="container">
         <h1>INVA - Bandi PlaCe-VdA</h1>
+
+        <!-- SELETTORE MODALITÀ -->
+        <div class="mode-switcher">
+            <button id="btn-mode-bandi" class="mode-btn active">Bandi Attivi</button>
+            <button id="btn-mode-esiti" class="mode-btn">Esiti</button>
+        </div>
+
         <form id="search-form">
-            
-            <!-- Aggiunto fieldset per disabilitare i filtri durante il caricamento -->
             <fieldset id="filters-fieldset">
-                <!-- MODIFICA: Creato un wrapper e due sezioni separate -->
-                <div class="category-wrapper">
-                    <div class="category-section">
-                        <span class="category-label">Categoria:</span>
-                        <div class="category-pills">
-                            <!-- Categorie principali (contratti) - Aggiunta classe contract-pill -->
-                            <button type="button" class="category-pill contract-pill" data-cat="lavori">Lavori</button>
-                            <button type="button" class="category-pill contract-pill" data-cat="servizi">Servizi</button>
-                            <button type="button" class="category-pill contract-pill" data-cat="forniture">Forniture</button>
+                
+                <!-- BARRA RICERCA PRINCIPALE (SEMPRE VISIBILE) -->
+                <div class="search-primary-section">
+                    <div class="search-primary-row">
+                        <div class="form-group flex-grow">
+                            <label for="oggetto-input" class="sr-only" style="display:none;">Oggetto</label>
+                            <input type="text" id="oggetto-input" placeholder="Cerca per oggetto, parole chiave...">
                         </div>
-                    </div>
-                    <div class="category-section">
-                        <span class="category-label">Categorie merceologiche:</span>
-                        <div class="category-pills">
-                            <!-- NUOVE categorie dal CSV -->
-                            <button type="button" class="category-pill merceologica-pill" data-cat="ict">ICT e Digitalizzazione</button>
-                            <button type="button" class="category-pill merceologica-pill" data-cat="generali">Beni e Servizi Generali</button>
-                            <button type="button" class="category-pill merceologica-pill" data-cat="sanita_dispositivi">Sanità - Dispositivi e Farmaci</button>
-                            <button type="button" class="category-pill merceologica-pill" data-cat="sanita_servizi">Sanità - Servizi Specialistici</button>
-                            <button type="button" class="category-pill merceologica-pill" data-cat="energia">Energia, Combustibili e Utilities</button>
-                            <button type="button" class="category-pill merceologica-pill" data-cat="efficienza">Efficienza Energetica e Sostenibilità</button>
-                            <button type="button" class="category-pill merceologica-pill" data-cat="facility">Facility Management</button>
-                            <button type="button" class="category-pill merceologica-pill" data-cat="trasporti">Veicoli, Mobilità e Trasporti</button>
-                            <button type="button" class="category-pill merceologica-pill" data-cat="consulenza">Servizi Professionali e di Consulenza</button>
-                            <button type="button" class="category-pill merceologica-pill" data-cat="cultura">Patrimonio Culturale</button>
-                            <button type="button" class="category-pill merceologica-pill" data-cat="ristorazione">Ristorazione Collettiva</button>
-                            <button type="button" class="category-pill merceologica-pill" data-cat="sicurezza">Sicurezza e Vigilanza</button>
+                        <div class="form-group flex-fixed" id="cig-input-group">
+                            <label for="cig-input" class="sr-only" style="display:none;">CIG</label>
+                            <input type="text" id="cig-input" placeholder="CIG (opzionale)">
                         </div>
+                        <button type="submit" class="btn-search">Cerca</button>
                     </div>
                 </div>
 
-                <div id="search-fields">
-                    <div class="form-group" id="cig-input-group">
-                        <label for="cig-input">CIG:</label>
-                        <input type="text" id="cig-input" placeholder="Cerca per CIG...">
-                    </div>
-                    <div class="form-group" id="oggetto-input-group">
-                        <label for="oggetto-input">Oggetto del bando:</label>
-                        <input type="text" id="oggetto-input" placeholder="Parole chiave nell'oggetto...">
-                    </div>
+                <!-- NUOVA BARRA TOGGLE ANIMATA -->
+                <div id="advanced-toggle-bar">
+                    <span class="toggle-text">Filtri Avanzati</span>
+                    <span class="toggle-icon">▼</span>
+                </div>
+
+                <!-- PANNELLO FILTRI AVANZATI (A SCOMPARSA) -->
+                <div id="advanced-filters">
                     
-                    <!-- NUOVO WRAPPER PER I CAMPI ENTE -->
-                    <div class="ente-fields-wrapper">
+                    <!-- Categorie -->
+                    <div class="category-wrapper">
+                        <div class="category-section">
+                            <span class="category-label">Tipologia Contratto:</span>
+                            <div class="category-pills">
+                                <button type="button" class="category-pill contract-pill" data-cat="lavori">Lavori</button>
+                                <button type="button" class="category-pill contract-pill" data-cat="servizi">Servizi</button>
+                                <button type="button" class="category-pill contract-pill" data-cat="forniture">Forniture</button>
+                            </div>
+                        </div>
+                        <div class="category-section">
+                            <span class="category-label">Area Merceologica:</span>
+                            <div class="category-pills">
+                                <button type="button" class="category-pill merceologica-pill" data-cat="ict">ICT e Digitalizzazione</button>
+                                <button type="button" class="category-pill merceologica-pill" data-cat="generali">Beni e Servizi Generali</button>
+                                <button type="button" class="category-pill merceologica-pill" data-cat="sanita_dispositivi">Sanità - Dispositivi</button>
+                                <button type="button" class="category-pill merceologica-pill" data-cat="sanita_servizi">Sanità - Servizi</button>
+                                <button type="button" class="category-pill merceologica-pill" data-cat="energia">Energia e Utilities</button>
+                                <button type="button" class="category-pill merceologica-pill" data-cat="efficienza">Efficienza Energetica</button>
+                                <button type="button" class="category-pill merceologica-pill" data-cat="facility">Facility Management</button>
+                                <button type="button" class="category-pill merceologica-pill" data-cat="trasporti">Veicoli e Trasporti</button>
+                                <button type="button" class="category-pill merceologica-pill" data-cat="consulenza">Consulenza</button>
+                                <button type="button" class="category-pill merceologica-pill" data-cat="cultura">Patrimonio Culturale</button>
+                                <button type="button" class="category-pill merceologica-pill" data-cat="ristorazione">Ristorazione</button>
+                                <button type="button" class="category-pill merceologica-pill" data-cat="sicurezza">Sicurezza</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Enti -->
+                    <div class="advanced-grid-row ente-fields-wrapper">
                         <div class="form-group" id="ente-proponente-group">
-                            <label for="ente-proponente-select">Ente Proponente:</label>
+                            <label for="ente-proponente-select">Ente Proponente</label>
                             <select id="ente-proponente-select"></select>
                         </div>
                         <div class="form-group" id="ente-appaltante-group">
-                            <label for="ente-appaltante-select">Ente Appaltante:</label>
+                            <label for="ente-appaltante-select">Ente Appaltante</label>
                             <select id="ente-appaltante-select"></select>
                         </div>
                     </div>
 
-                    <!-- NUOVO WRAPPER PER I CAMPI RANGE -->
-                    <div class="range-fields-wrapper">
+                    <!-- Range (Importi e Date) -->
+                    <div class="advanced-grid-row range-fields-wrapper">
                         <div class="form-group" id="importo-da-group">
-                            <label for="importo-da-input">Importo da:</label>
-                            <input type="number" id="importo-da-input" placeholder="Es. 10000" min="0">
+                            <label for="importo-da-input">Importo da (€)</label>
+                            <input type="number" id="importo-da-input" placeholder="Es. 1000" min="0">
                         </div>
                         <div class="form-group" id="importo-a-group">
-                            <label for="importo-a-input">Importo a:</label>
+                            <label for="importo-a-input">Importo a (€)</label>
                             <input type="number" id="importo-a-input" placeholder="Es. 50000" min="0">
                         </div>
                         <div class="form-group" id="data-da-group">
-                            <label for="data-da-input">Scadenza da:</label>
+                            <label for="data-da-input" id="label-data-da">Scadenza da</label>
                             <input type="date" id="data-da-input">
                         </div>
                         <div class="form-group" id="data-a-group">
-                            <label for="data-a-input">Scadenza a:</label>
+                            <label for="data-a-input" id="label-data-a">Scadenza a</label>
                             <input type="date" id="data-a-input">
                         </div>
                     </div>
-                </div>
-                <div id="controls-container">
-                    <div class="form-group" id="num-results-group" style="max-width: 150px;">
-                        <label for="num-results-input">Risultati/pag:</label>
-                        <input type="number" id="num-results-input" value="10" min="1" max="1000">
-                    </div>
-                    <!-- Pulsanti raggruppati per layout -->
-                    <div class="button-group" style="display: flex; gap: 10px; flex-shrink: 0;">
-                        <button type="button" id="reset-filters-btn">Azzera Filtri</button>
-                        <button type="submit">Applica Filtri</button>
+
+                    <!-- Footer Avanzato -->
+                    <div class="advanced-footer">
+                        <div class="form-group" id="num-results-group" style="width: 140px; margin-bottom: 0;">
+                            <label for="num-results-input" style="margin-bottom: 2px;">Risultati per pag.</label>
+                            <input type="number" id="num-results-input" value="10" min="1" max="1000">
+                        </div>
+                        <button type="button" id="reset-filters-btn">Azzera tutti i filtri</button>
                     </div>
                 </div>
-            </fieldset> <!-- Chiusura Fieldset -->
+            </fieldset>
         </form>
     </div>
 
     <div class="container" style="padding-top: 0;">
-         <div class="tabs">
-            <button class="tab-link active" data-view="sintetico">Bandi Attivi</button>
-            <button class="tab-link" data-view="completo">Vista Completa</button>
-            <button class="tab-link" data-view="mappa">Mappa Bandi</button>
-            <button class="tab-link" data-view="cerca-esito">Cerca Esito CIG</button>
+         <div class="tabs" id="tabs-container">
+             <!-- Tabs generati via JS -->
         </div>
         
         <div id="results-status-container"></div>
@@ -658,7 +528,7 @@
             <div id="map-container"></div>
         </div>
 
-        <!-- Contenitore per i risultati della ricerca Esiti -->
+        <!-- Contenitore per i risultati della ricerca Esiti (usiamo feedContainer con stile specifico) -->
         <div id="esito-container"></div>
 
         <div id="feed-container">
@@ -674,13 +544,13 @@
         </div>
     </div>
 
-    <!-- Script Leaflet spostati in <head> -->
-
     <script>
         // --- ELEMENTI DEL DOM ---
         const searchForm = document.getElementById('search-form');
-        // Nuovo elemento Fieldset
         const filtersFieldset = document.getElementById('filters-fieldset');
+        // Modifica: Seleziona il nuovo toggle bar
+        const advancedToggleBar = document.getElementById('advanced-toggle-bar');
+        const advancedFiltersDiv = document.getElementById('advanced-filters');
         const feedContainer = document.getElementById('feed-container');
         const esitoContainer = document.getElementById('esito-container');
         const mapContainer = document.getElementById('map-container');
@@ -692,291 +562,86 @@
         const currentPageSpan = document.getElementById('current-page-span');
         const paginationControls = document.getElementById('pagination-controls');
         const tabButtons = document.querySelectorAll('.tab-link');
-        // Seleziona i due gruppi di pillole separatamente
         const contractPills = document.querySelectorAll('.contract-pill');
         const merceologicaPills = document.querySelectorAll('.merceologica-pill');
         const resultsStatusContainer = document.getElementById('results-status-container');
-        // Nuovi elementi select
         const enteProponenteSelect = document.getElementById('ente-proponente-select');
         const enteAppaltanteSelect = document.getElementById('ente-appaltante-select');
-        // Nuovo pulsante Reset
         const resetFiltersBtn = document.getElementById('reset-filters-btn');
+        const btnModeBandi = document.getElementById('btn-mode-bandi');
+        const btnModeEsiti = document.getElementById('btn-mode-esiti');
+        const tabsContainer = document.getElementById('tabs-container');
+        const labelDataDa = document.getElementById('label-data-da');
+        const labelDataA = document.getElementById('label-data-a');
 
         // --- STATO DELL'APPLICAZIONE ---
+        let currentMode = 'bandi';
         let currentPage = 1;
         let fetchedItems = [];
         let currentView = 'sintetico';
-        // Variabili separate per i filtri
         let selectedContractType = '';
         let selectedMerceologica = '';
-        let map = null; // Riferimento alla mappa Leaflet
-        let markersLayer = null; // Layer per i cluster di pin sulla mappa
+        let map = null;
+        let markersLayer = null;
 
-        // --- DB ENTI (Simulato - Primi 20 come richiesto) ---
+        // --- TOGGLE FILTRI AVANZATI ---
+        advancedToggleBar.addEventListener('click', () => {
+            const isHidden = advancedFiltersDiv.style.display === 'none' || advancedFiltersDiv.style.display === '';
+            advancedFiltersDiv.style.display = isHidden ? 'block' : 'none';
+            advancedToggleBar.classList.toggle('open', isHidden);
+        });
+
+        // --- DB ENTI (Simulato - Primi 20) ---
         const entiList = [
-    "\"\"\"CENTRO DI STUDI STORICO-LETTERARI NATALINO SAPEGNO\"\" ONLUS\"",
-    "AGENZIA REGIONALE DEI SEGRETARI DEGLI ENTI LOCALI DELLA VALLE D’AOSTA",
-    "ANPAS Comitato Regionale Valle d’Aosta Federazione Regionale del Soccorso VDA-ODV",
-    "AREA VDA - AGENZIA REGIONALE PER LE EROGAZIONE IN AGRICOLTURA DELLA REGIONE AUTONOMA VALLE D'AOSTA",
-    "ARER VALLE D'AOSTA",
-    "ARPA VALLE D'AOSTA",
-    "ASSOCIATION REGIONALE ELEVEURS VALDOTAINS (A.R.E.V.)",
-    "ASSOCIAZIONE FORTE DI BARD",
-    "ASSOCIAZIONE VALDOSTANA MAESTRI DI SCI - AVMS",
-    "AVDA SPA",
-    "AZIENDA PUBBLICI SERVIZI AOSTA SOCIETA PER AZIONI",
-    "AZIENDA USL VALLE D'AOSTA",
-    "C.M.F. SAINT-PIERRE VILLENEUVE",
-    "CAMERA VALDOSTANA DELLE IMPRESE E DELLE PROFESSIONI",
-    "CASA DI RIPOSO J. B. FESTAZ",
-    "CENTRO SERVIZI COURMAYEUR SRL",
-    "CERVIM",
-    "CHAMOIS SERVIZI SRL",
-    "COLLEGIO GEOMETRI E GEOMETRI LAUREATI DELLA VALLE D’AOSTA",
-    "COMUNE DI ALLEIN",
-    "COMUNE DI ANTEY SAINT ANDRE",
-    "COMUNE DI AOSTA",
-    "COMUNE DI ARNAD",
-    "COMUNE DI ARVIER",
-    "COMUNE DI AVISE",
-    "COMUNE DI AYAS",
-    "COMUNE DI AYMAVILLES",
-    "COMUNE DI BARD",
-    "COMUNE DI BIONAZ",
-    "COMUNE DI BRISSOGNE",
-    "COMUNE DI BRUSSON",
-    "COMUNE DI CHALLAND SAINT ANSELME",
-    "COMUNE DI CHALLAND SAINT VICTOR",
-    "COMUNE DI CHAMBAVE",
-    "COMUNE DI CHAMOIS",
-    "COMUNE DI CHAMPDEPRAZ",
-    "COMUNE DI CHAMPORCHER",
-    "COMUNE DI CHARVENSOD",
-    "COMUNE DI CHATILLON",
-    "COMUNE DI COGNE",
-    "COMUNE DI COURMAYEUR",
-    "COMUNE DI DONNAS",
-    "COMUNE DI DOUES",
-    "COMUNE DI EMARESE",
-    "COMUNE DI ETROUBLES",
-    "COMUNE DI FÉNIS",
-    "COMUNE DI FONTAINEMORE",
-    "COMUNE DI GABY",
-    "COMUNE DI GIGNOD",
-    "COMUNE DI GRESSAN",
-    "COMUNE DI GRESSONEY-LA-TRINITÉ",
-    "COMUNE DI GRESSONEY-SAINT-JEAN",
-    "COMUNE DI HONE",
-    "COMUNE DI INTROD",
-    "COMUNE DI ISSIME",
-    "COMUNE DI ISSOGNE",
-    "COMUNE DI JOVENCAN",
-    "COMUNE DI LA MAGDELEINE",
-    "COMUNE DI LA SALLE",
-    "COMUNE DI LILLIANES",
-    "COMUNE DI MONTJOVET",
-    "COMUNE DI MORGEX",
-    "COMUNE DI NUS",
-    "COMUNE DI OLLOMONT",
-    "COMUNE DI OYACE",
-    "COMUNE DI PERLOZ",
-    "COMUNE DI POLLEIN",
-    "COMUNE DI PONTBOSET",
-    "COMUNE DI PONTEY",
-    "COMUNE DI PONT-SAINT-MARTIN",
-    "COMUNE DI PRE'-SAINT-DIDIER",
-    "COMUNE DI QUART",
-    "COMUNE DI RHEMES-NOTRE-DAME",
-    "COMUNE DI RHEMES-SAINT-GEORGES",
-    "COMUNE DI ROISAN",
-    "COMUNE DI SAINT DENIS",
-    "COMUNE DI SAINT-CHRISTOPHE",
-    "COMUNE DI SAINT-MARCEL",
-    "COMUNE DI SAINT-NICOLAS",
-    "COMUNE DI SAINT-OYEN",
-    "COMUNE DI SAINT-PIERRE",
-    "COMUNE DI SAINT-RHÉMY-EN-BOSSES",
-    "COMUNE DI SAINT-VINCENT",
-    "COMUNE DI SARRE",
-    "COMUNE DI TORGNON",
-    "COMUNE DI VALGRISENCHE",
-    "COMUNE DI VALPELLINE",
-    "COMUNE DI VALSAVARENCHE",
-    "COMUNE DI VALTOURNENCHE",
-    "COMUNE DI VERRAYES",
-    "COMUNE DI VERRES",
-    "COMUNE DI VILLENEUVE",
-    "COMUNE LA THUILE",
-    "CONSIGLIO REGIONALE DELLA VALLE D'AOSTA",
-    "CONSORZIO DEGLI ENTI LOCALI DELLA VALLE D'AOSTA (CELVA)",
-    "CONSORZIO DEI COMUNI DELLA VALLE D'AOSTA – B.I.M. DORA BALTEA",
-    "CONSORZIO REGIONALE PER LA TUTELA, L’INCREMENTO E L’ESERCIZIO DELLA PESCA IN VALLE D’AOSTA",
-    "CONVITTO REGIONALE FEDERICO CHABOD",
-    "CRIA (CENTRO REGIONALE ISTRUZIONE PER ADULTI)",
-    "Ente Parco Nazionale Gran Paradiso",
-    "ENVERS SRL",
-    "FINAOSTA S.P.A.",
-    "FONDAZIONE CENTRO INTERNAZIONALE SU DIRITTO SOCIETA' E ECONOMIA",
-    "FONDAZIONE CLÉMENT FILLIETROZ-ONLUS",
-    "FONDAZIONE DELLA REGIONE AUTONOMA VALLE D’AOSTA PER LA RICERCA SUL CANCRO",
-    "FONDAZIONE GRAN PARADISO – GRAND PARADIS",
-    "FONDAZIONE LICEO LINGUISTICO COURMAYEUR",
-    "FONDAZIONE MARIA IDA VIGLINO PER LA CULTURA MUSICALE",
-    "FONDAZIONE MONTAGNA SICURA",
-    "FONDAZIONE PER LA FORMAZIONE PROFESSIONALE TURISTICA",
-    "FONDAZIONE SISTEMA OLLIGNAN",
-    "FONDAZIONE TROFEO MEZZALAMA",
-    "GRESSONEY SPORT HAUS S.R.L. A SOCIO UNICO",
-    "GRUPPO DI AZIONE LOCALE VALLE D’AOSTA",
-    "IN.VA. S.P.A.",
-    "INSTITUT AGRICOLE REGIONAL",
-    "INSTITUT VALDOTAINE DE L'ARTISAT DE TRADITION",
-    "ISILTP ISTITUZIONE SCOLASTICA DI ISTRUZIONE LICEALE TECNICA PROFESSIONALE",
-    "ISTITUTO MUSICALE PAREGGIATO DELLA VALLE D'AOSTA",
-    "ISTITUTO PER IL SISTEMA PREVIDENZIALE DEI CONSIGLIERI REGIONALI",
-    "ISTITUTO REGIONALE A. GERVASONE",
-    "\"ISTITUTO TECNICO PROFESSIONALE REGIONALE \"\"CORRADO GEX\"\"\"",
-    "ISTITUZIONE SCOLASTICA “MONT EMILIUS 3”",
-    "ISTITUZIONE SCOLASTICA ABBÉ J.M.TRÈVES",
-    "ISTITUZIONE SCOLASTICA ABBÉ PROSPER DUC",
-    "\"ISTITUZIONE SCOLASTICA DI ISTRUZIONE TECNICA E PROFESSIONALE \"\"INNOCENT MANZETTI\"\"\"",
-    "ISTITUZIONE SCOLASTICA ELIO REINOTTI",
-    "ISTITUZIONE SCOLASTICA EMILE LEXERT",
-    "ISTITUZIONE SCOLASTICA EUGENIA MARTINET",
-    "ISTITUZIONE SCOLASTICA JEAN- BAPTISTE CERLOGNE",
-    "ISTITUZIONE SCOLASTICA LUIGI BARONE",
-    "ISTITUZIONE SCOLASTICA LUIGI EINAUDI",
-    "ISTITUZIONE SCOLASTICA MARIA IDA VIGLINO",
-    "ISTITUZIONE SCOLASTICA MONT EMILIUS 2",
-    "ISTITUZIONE SCOLASTICA OTTAVIO JACQUEMET",
-    "ISTITUZIONE SCOLASTICA SAINT ROCH",
-    "ISTITUZIONE SCOLASTICA SAN FRANCESCO",
-    "ISTITUZIONE SCOLASTICA UNITÉ DES COMMUNES VALDÔTAINES GRAND COMBIN - GIGNOD",
-    "ISTITUZIONE SCOLASTICA UNITÉ DES COMMUNES VALDÔTAINES MONT ROSE A",
-    "ISTITUZIONE SCOLASTICA UNITÉ DES COMMUNES VALDÔTAINES MONT-EMILIUS 1",
-    "ISTITUZIONE SCOLASTICA VALDIGNE MONT-BLANC",
-    "LICEO CLASSICO, ARTISTICO E MUSICALE",
-    "LICEO DELLE SCIENZE UMANE E SCIENTIFICO REGINA MARIA ADELAIDE",
-    "\"LICEO SCIENTIFICO E LINGUISTICO \"\"E. BÉRARD\"\"\"",
-    "ORDINE DEGLI ARCHITETTI, PIANIFICATORI, PAESAGGISTI E CONSERVATORI DELLA REGIONE AUTONOMA VALLE D'AOSTA",
-    "PARCO NATURALE MONT AVIC",
-    "REGIONE AUTONOMA VALLE D'AOSTA",
-    "SERVICES DES EAUX VALDÔTAINES S.R.L.*BETA*",
-    "SITRASB S.P.A.",
-    "SOCIETÀ DI SERVIZI VALLE D'AOSTA S.P.A. in francese SOCIÉTÉ DES SERVICES VALLÉE D'AOSTE S.P.A.",
-    "SOCIÉTÉ INFRASTRUCTURES VALDÔTAINES S.R.L.",
-    "STRUTTURA AFFARI DI PREFETTURA DELLA REGIONE AUTONOMA VALLE D'AOSTA",
-    "STRUTTURA VALLE D'AOSTA SRL",
-    "SUB-ATO MONTE EMILIUS PIANA D'AOSTA",
-    "SVAP S.r.l. a S.U.",
-    "UFFICIO REGIONALE DEL TURISMO",
-    "UNIONCAMERE PIEMONTE",
-    "Unité des Communes valdôtaines Evançon",
-    "Unité des Communes valdôtaines Grand-Combin",
-    "Unité des Communes valdôtaines Grand-Paradis",
-    "Unité des Communes valdôtaines Mont-Cervin",
-    "Unité des Communes valdôtaines Mont-Émilius",
-    "Unité des Communes valdôtaines Mont-Rose",
-    "Unité des Communes valdôtaines Valdigne - Mont-Blanc",
-    "Unité des Communes valdôtaines Walser",
-    "UNIVERSITÀ DELLA VALLE D'AOSTA",
-    "V.I.T.A. S.p.A."
-];
+            "\"\"\"CENTRO DI STUDI STORICO-LETTERARI NATALINO SAPEGNO\"\" ONLUS\"",
+            "AGENZIA REGIONALE DEI SEGRETARI DEGLI ENTI LOCALI DELLA VALLE D’AOSTA",
+            "ANPAS Comitato Regionale Valle d’Aosta Federazione Regionale del Soccorso VDA-ODV",
+            "AREA VDA - AGENZIA REGIONALE PER LE EROGAZIONE IN AGRICOLTURA DELLA REGIONE AUTONOMA VALLE D'AOSTA",
+            "ARER VALLE D'AOSTA",
+            "ARPA VALLE D'AOSTA",
+            "ASSOCIATION REGIONALE ELEVEURS VALDOTAINS (A.R.E.V.)",
+            "ASSOCIAZIONE FORTE DI BARD",
+            "ASSOCIAZIONE VALDOSTANA MAESTRI DI SCI - AVMS",
+            "AVDA SPA",
+            "AZIENDA PUBBLICI SERVIZI AOSTA SOCIETA PER AZIONI",
+            "AZIENDA USL VALLE D'AOSTA",
+            "C.M.F. SAINT-PIERRE VILLENEUVE",
+            "CAMERA VALDOSTANA DELLE IMPRESE E DELLE PROFESSIONI",
+            "CASA DI RIPOSO J. B. FESTAZ",
+            "CENTRO SERVIZI COURMAYEUR SRL",
+            "CERVIM",
+            "CHAMOIS SERVIZI SRL",
+            "COLLEGIO GEOMETRI E GEOMETRI LAUREATI DELLA VALLE D’AOSTA",
+            "COMUNE DI ALLEIN"
+        ];
 
-        // --- LISTA COMPLETA COORDINATE 74 COMUNI VDA ---
+        // --- LISTA COORDINATE COMUNI VDA ---
         const comuniVdA = {
-            "allein": [45.8083, 7.2717],
-            "antey-saint-andré": [45.7953, 7.5906],
-            "aosta": [45.7372, 7.3206],
-            "arnad": [45.6444, 7.7203],
-            "arvier": [45.7022, 7.1667],
-            "avise": [45.7092, 7.1406],
-            "ayas": [45.8139, 7.6933],
-            "aymavilles": [45.6983, 7.2447],
-            "bard": [45.6086, 7.7444],
-            "bionaz": [45.8647, 7.4156],
-            "brissogne": [45.7325, 7.4036],
-            "brusson": [45.7589, 7.7289],
-            "challand-saint-anselme": [45.7161, 7.7425],
-            "challand-saint-victor": [45.6922, 7.7056],
-            "chambave": [45.7447, 7.5517],
-            "chamois": [45.8389, 7.6183],
-            "champdepraz": [45.6858, 7.6558],
-            "champorcher": [45.6236, 7.6206],
-            "charvensod": [45.7233, 7.3247],
-            "châtillon": [45.7497, 7.6197],
-            "cogne": [45.6083, 7.3556],
-            "courmayeur": [45.7969, 6.9694],
-            "donnas": [45.6053, 7.7689],
-            "doues": [45.8178, 7.3142],
-            "emarèse": [45.7231, 7.6997],
-            "etroubles": [45.8214, 7.2297],
-            "fénis": [45.7342, 7.4928],
-            "fontainemore": [45.6453, 7.8586],
-            "gaby": [45.7111, 7.8819],
-            "gignod": [45.7839, 7.2939],
-            "gressan": [45.7247, 7.2894],
-            "gressoney-la-trinité": [45.8494, 7.8247],
-            "gressoney-saint-jean": [45.7775, 7.8242],
-            "hône": [45.6133, 7.7397],
-            "introd": [45.6908, 7.1831],
-            "issime": [45.6842, 7.8536],
-            "issoire": [45.7339, 7.5150], 
-            "jovençan": [45.7147, 7.2731],
-            "la magdeleine": [45.8161, 7.6172],
-            "la salle": [45.7469, 7.0767],
-            "la thuile": [45.7150, 6.9500],
-            "lillianes": [45.6331, 7.8453],
-            "montjovet": [45.6958, 7.6589],
-            "morgex": [45.7569, 7.0389],
-            "nus": [45.7403, 7.4669],
-            "ollomont": [45.8497, 7.3125],
-            "oyace": [45.8489, 7.3794],
-            "perloz": [45.6136, 7.8131],
-            "pollein": [45.7294, 7.3567],
-            "pont-saint-martin": [45.5989, 7.7956],
-            "pontboset": [45.6072, 7.6869],
-            "pontey": [45.7408, 7.5878],
-            "pré-saint-didier": [45.7650, 6.9872],
-            "quart": [45.7414, 7.4147],
-            "rhêmes-notre-dame": [45.5697, 7.1189],
-            "rhêmes-saint-georges": [45.6567, 7.1542],
-            "roisan": [45.7675, 7.3169],
-            "saint-christophe": [45.7533, 7.3542],
-            "saint-denis": [45.7506, 7.5572],
-            "saint-marcel": [45.7375, 7.4486],
-            "saint-nicolas": [45.7178, 7.1664],
-            "saint-oyen": [45.8261, 7.2158],
-            "saint-pierre": [45.7103, 7.2311],
-            "saint-rhémy-en-bosses": [45.8225, 7.1808],
-            "saint-vincent": [45.7500, 7.6458],
-            "sarre": [45.7231, 7.2581],
-            "torgnon": [45.8086, 7.5689],
-            "valgrisenche": [45.6303, 7.0628],
-            "valpelline": [45.8300, 7.3256],
-            "valsavarenche": [45.5936, 7.2097],
-            "valtournenche": [45.8792, 7.6236],
-            "verrès": [45.6694, 7.6889],
-            "verrayes": [45.7628, 7.5339],
-            "villeneuve": [45.7036, 7.2089],
-            // Alias e altri enti comuni
-            "inva": [45.7533, 7.3542], // Saint-Christophe
-            "regione autonoma valle d'aosta": [45.7372, 7.3206], // Aosta
-            "azienda usl valle d'aosta": [45.7372, 7.3206], // Aosta
-            "ausl valle d'aosta": [45.7372, 7.3206], // Aosta
-            "unite des communes valdotaines grand-paradis": [45.7036, 7.2089], // Villeneuve
-             "unite des communes valdotaines valdigne-mont-blanc": [45.7469, 7.0767], // La Salle
-             "unite des communes valdotaines mont-emilius": [45.7414, 7.4147], // Quart
-             "unite des communes valdotaines mont-cervin": [45.7497, 7.6197], // Châtillon
-             "unite des communes valdotaines evancon": [45.6694, 7.6889], // Verrès
-             "unite des communes valdotaines mont-rose": [45.5989, 7.7956], // Pont-Saint-Martin
-             "unite des communes valdotaines walser": [45.6842, 7.8536], // Issime
-             "bim": [45.7372, 7.3206], // Aosta
-             "celva": [45.7372, 7.3206] // Aosta
+            "allein": [45.8083, 7.2717], "antey-saint-andré": [45.7953, 7.5906], "aosta": [45.7372, 7.3206], "arnad": [45.6444, 7.7203],
+            "arvier": [45.7022, 7.1667], "avise": [45.7092, 7.1406], "ayas": [45.8139, 7.6933], "aymavilles": [45.6983, 7.2447],
+            "bard": [45.6086, 7.7444], "bionaz": [45.8647, 7.4156], "brissogne": [45.7325, 7.4036], "brusson": [45.7589, 7.7289],
+            "challand-saint-anselme": [45.7161, 7.7425], "challand-saint-victor": [45.6922, 7.7056], "chambave": [45.7447, 7.5517],
+            "chamois": [45.8389, 7.6183], "champdepraz": [45.6858, 7.6558], "champorcher": [45.6236, 7.6206], "charvensod": [45.7233, 7.3247],
+            "châtillon": [45.7497, 7.6197], "cogne": [45.6083, 7.3556], "courmayeur": [45.7969, 6.9694], "donnas": [45.6053, 7.7689],
+            "doues": [45.8178, 7.3142], "emarèse": [45.7231, 7.6997], "etroubles": [45.8214, 7.2297], "fénis": [45.7342, 7.4928],
+            "fontainemore": [45.6453, 7.8586], "gaby": [45.7111, 7.8819], "gignod": [45.7839, 7.2939], "gressan": [45.7247, 7.2894],
+            "gressoney-la-trinité": [45.8494, 7.8247], "gressoney-saint-jean": [45.7775, 7.8242], "hône": [45.6133, 7.7397],
+            "introd": [45.6908, 7.1831], "issime": [45.6842, 7.8536], "issoire": [45.7339, 7.5150], "jovençan": [45.7147, 7.2731],
+            "la magdeleine": [45.8161, 7.6172], "la salle": [45.7469, 7.0767], "la thuile": [45.7150, 6.9500], "lillianes": [45.6331, 7.8453],
+            "montjovet": [45.6958, 7.6589], "morgex": [45.7569, 7.0389], "nus": [45.7403, 7.4669], "ollomont": [45.8497, 7.3125],
+            "oyace": [45.8489, 7.3794], "perloz": [45.6136, 7.8131], "pollein": [45.7294, 7.3567], "pont-saint-martin": [45.5989, 7.7956],
+            "pontboset": [45.6072, 7.6869], "pontey": [45.7408, 7.5878], "pré-saint-didier": [45.7650, 6.9872], "quart": [45.7414, 7.4147],
+            "rhêmes-notre-dame": [45.5697, 7.1189], "rhêmes-saint-georges": [45.6567, 7.1542], "roisan": [45.7675, 7.3169],
+            "saint-christophe": [45.7533, 7.3542], "saint-denis": [45.7506, 7.5572], "saint-marcel": [45.7375, 7.4486],
+            "saint-nicolas": [45.7178, 7.1664], "saint-oyen": [45.8261, 7.2158], "saint-pierre": [45.7103, 7.2311],
+            "saint-rhémy-en-bosses": [45.8225, 7.1808], "saint-vincent": [45.7500, 7.6458], "sarre": [45.7231, 7.2581],
+            "torgnon": [45.8086, 7.5689], "valgrisenche": [45.6303, 7.0628], "valpelline": [45.8300, 7.3256],
+            "valsavarenche": [45.5936, 7.2097], "valtournenche": [45.8792, 7.6236], "verrès": [45.6694, 7.6889], "verrayes": [45.7628, 7.5339],
+            "villeneuve": [45.7036, 7.2089], "inva": [45.7533, 7.3542], "regione autonoma valle d'aosta": [45.7372, 7.3206],
+            "azienda usl valle d'aosta": [45.7372, 7.3206], "ausl valle d'aosta": [45.7372, 7.3206], "bim": [45.7372, 7.3206], "celva": [45.7372, 7.3206]
         };
 
-        // --- SINONIMI PER CATEGORIE ---
-        // MODIFICATO: Dizionario aggiornato in base al file CSV
+        // --- SINONIMI CATEGORIE ---
         const categorySynonyms = {
             'ict': ['software', 'hardware', 'digitale', 'pc', 'computer', 'server', 'rete', 'web', 'sito', 'app', 'cloud', 'ict', 'telefonia', 'dati', 'digitalizzazione', 'connettività'],
             'generali': ['cancelleria', 'arredi', 'pulizia', 'logistica', 'archivio', 'postali', 'copisteria', 'materiali consumo', 'beni', 'amministrativi', 'ufficio'],
@@ -991,17 +656,65 @@
             'ristorazione': ['ristorazione', 'catering', 'mense', 'pasti', 'viveri', 'derrate alimentari', 'refezione'],
             'sicurezza': ['vigilanza', 'guardiania', 'sicurezza', 'antincendio', 'videosorveglianza', 'portierato armato']
         };
-        
-        // --- NUOVA FUNZIONE PER POPOLARE I MENU A TENDINA DEGLI ENTI ---
+
+        // --- LOGICA TABS ---
+        function initTabs() {
+            tabsContainer.innerHTML = '';
+            if (currentMode === 'bandi') {
+                tabsContainer.innerHTML = `
+                    <button class="tab-link active" data-view="sintetico">Bandi Attivi</button>
+                    <button class="tab-link" data-view="completo">Vista Completa</button>
+                    <button class="tab-link" data-view="mappa">Mappa Bandi</button>
+                `;
+                currentView = 'sintetico';
+                mapWrapper.style.display = 'none';
+                esitoContainer.style.display = 'none';
+            } else {
+                tabsContainer.innerHTML = `
+                    <button class="tab-link active" data-view="esiti-lista">Lista Esiti</button>
+                `;
+                currentView = 'esiti-lista';
+                mapWrapper.style.display = 'none';
+            }
+            attachTabListeners();
+        }
+
+        function attachTabListeners() {
+             const tabs = document.querySelectorAll('.tab-link');
+             tabs.forEach(btn => btn.addEventListener('click', () => {
+                tabs.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentView = btn.dataset.view;
+                if (currentView === 'mappa') {
+                    setTimeout(() => { if (map) map.invalidateSize(); updateMap(); }, 300);
+                }
+                displayItems();
+            }));
+        }
+
+        function updateModeUI() {
+            btnModeBandi.classList.toggle('active', currentMode === 'bandi');
+            btnModeEsiti.classList.toggle('active', currentMode === 'esiti');
+            
+            // In Esiti mostriamo comunque i filtri avanzati, ma resettati o adattati.
+            // Rimuoviamo la logica di nascondimento CSS esplicito basato su 'esito-mode'
+            // e lasciamo che l'utente decida se aprire i filtri.
+            
+            if (currentMode === 'bandi') {
+                labelDataDa.textContent = 'Scadenza da';
+                labelDataA.textContent = 'Scadenza a';
+            } else {
+                labelDataDa.textContent = 'Pubblicazione da';
+                labelDataA.textContent = 'Pubblicazione a';
+            }
+            initTabs();
+        }
+
         function populateEnteSelects() {
-            // Opzione di default
             const defaultOption = '<option value="">Tutti</option>';
             enteProponenteSelect.innerHTML = defaultOption;
             enteAppaltanteSelect.innerHTML = defaultOption;
-
-            // Popola la lista
             entiList.forEach(ente => {
-                // Rimuovi eventuali virgolette extra per il valore e il testo
                 const cleanEnte = ente.replace(/^"+|"+$/g, '').replace(/""/g, '"');
                 const optionHtml = `<option value="${cleanEnte}">${cleanEnte}</option>`;
                 enteProponenteSelect.insertAdjacentHTML('beforeend', optionHtml);
@@ -1009,94 +722,62 @@
             });
         }
 
-        // --- NUOVE FUNZIONI PER DISABILITARE/ABILITARE I FILTRI ---
-        function disableFilters() {
-            filtersFieldset.disabled = true;
-        }
-        function enableFilters() {
-            filtersFieldset.disabled = false;
-        }
+        function disableFilters() { filtersFieldset.disabled = true; }
+        function enableFilters() { filtersFieldset.disabled = false; }
 
-
-        // --- COSTRUZIONE URL (Bandi) ---
         function buildUrl() {
             const baseUrl = "https://place-vda.aflink.it/portale/rss_new.asp";
             const numResults = numResultsInput.value;
             const cig = document.getElementById('cig-input').value.trim();
             let oggetto = document.getElementById('oggetto-input').value.trim();
-            // Legge dai nuovi menu a tendina
             const enteProponente = enteProponenteSelect.value;
             const enteAppaltante = enteAppaltanteSelect.value;
-            // --- INIZIO NUOVE AGGIUNTE ---
-            const importoDa = document.getElementById('importo-da-input').value;
-            const importoA = document.getElementById('importo-a-input').value;
             const dataDa = document.getElementById('data-da-input').value;
             const dataA = document.getElementById('data-a-input').value;
-            // --- FINE NUOVE AGGIUNTE ---
+
+            let filterHide = "bScaduto=0 and tipo<>'Esito'";
+            let sortField = 'DtScadenzaBandoTecnical';
+            let sortOrder = 'asc';
+
+            if (currentMode === 'esiti') {
+                filterHide = "bScaduto=0 and tipo='Esito'";
+                sortField = 'DtPubblicazione';
+                sortOrder = 'DESC';
+            }
 
             const params = new URLSearchParams({
                 Table: 'DASHBOARD_VIEW_DOCUMENTI_PUBBLICI',
-                FilterHide: "bScaduto=0 and tipo<>'Esito'", 
+                FilterHide: filterHide,
                 ML_KEY: 'TEMPLATE_RSS_DPCM_ML',
-                sort: 'DtScadenzaBandoTecnical',
-                sortorder: 'asc',
+                sort: sortField,
+                sortorder: sortOrder,
                 numRowForPag: numResults,
                 nPag: currentPage
             });
 
             const filters = [];
-            // --- REVISIONE DI TUTTI I FILTRI (rimozione namespace 'afs:') ---
             if (cig) filters.push(`CIG LIKE '%${encodeURIComponent(cig)}%'`);
             if (oggetto) filters.push(`Oggetto LIKE '%${encodeURIComponent(oggetto)}%'`); 
             
-            // --- MODIFICA LOGICA FILTRI CATEGORIA ---
-            // Filtro per Categoria (Contratto)
-            // CORREZIONE: Usare le variabili corrette selectedContractType e selectedMerceologica
+            // Logica filtri per Categorie (applicata anche agli Esiti se l'utente li seleziona)
             if (selectedContractType) {
                  filters.push(`Contratto LIKE '%${encodeURIComponent(selectedContractType)}%'`);
             }
-            // Filtro per Categoria Merceologica (Oggetto)
             if (selectedMerceologica) {
                 const catLower = selectedMerceologica.toLowerCase();
                 const synonyms = categorySynonyms[catLower] || [catLower];
                 const orQuery = synonyms.map(word => `Oggetto LIKE '%${encodeURIComponent(word)}%'`).join(' OR ');
                 filters.push(`(${orQuery})`);
             }
-            // --- FINE MODIFICA ---
             
-            // --- MODIFICA FILTRI ENTE ---
-            // Riportati a LIKE e rimosso namespace
-            if (enteProponente) {
-                filters.push(`EnteProponente LIKE '%${enteProponente.replace(/'/g, "''")}%'`);
-            }
-            if (enteAppaltante) {
-                filters.push(`DenominazioneEnte LIKE '%${enteAppaltante.replace(/'/g, "''")}%'`);
-            }
-            // --- FINE MODIFICA ---
+            if (enteProponente) filters.push(`EnteProponente LIKE '%${enteProponente.replace(/'/g, "''")}%'`);
+            if (enteAppaltante) filters.push(`DenominazioneEnte LIKE '%${enteAppaltante.replace(/'/g, "''")}%'`);
             
-            // --- INIZIO NUOVE AGGIUNTE FILTRI RANGE ---
-            // RIMOSSI i filtri importo da qui. Saranno gestiti lato client.
-            
-            // Rimosso namespace e CORRETTO
-            if (dataDa) filters.push(`DtScadenzaBandoTecnical >= '${dataDa}T00:00:00'`);
-            if (dataA) filters.push(`DtScadenzaBandoTecnical <= '${dataA}T23:59:59'`);
-            // --- FINE MODIFICA ---
+            const dateField = currentMode === 'bandi' ? 'DtScadenzaBandoTecnical' : 'DtPubblicazione';
+            if (dataDa) filters.push(`${dateField} >= '${dataDa}T00:00:00'`);
+            if (dataA) filters.push(`${dateField} <= '${dataA}T23:59:59'`);
 
             if (filters.length > 0) params.set('Filter', filters.join(' AND '));
-            return `${baseUrl}?${params.toString()}`;
-        }
-        
-        // --- COSTRUZIONE URL (Esiti per CIG) ---
-        function buildEsitoUrl(cig) {
-             const baseUrl = "https://place-vda.aflink.it/portale/rss_new.asp";
-             const params = new URLSearchParams({
-                Table: 'DASHBOARD_VIEW_DOCUMENTI_PUBBLICI',
-                FilterHide: "bScaduto=0 and tipo='Esito'", // CERCA SOLO ESITI
-                ML_KEY: 'TEMPLATE_RSS_DPCM_ML',
-                sort: 'DtPubblicazione',
-                sortorder: 'DESC',
-                Filter: `CIG LIKE '%${encodeURIComponent(cig)}%'` // Filtra per CIG
-            });
             return `${baseUrl}?${params.toString()}`;
         }
 
@@ -1118,199 +799,144 @@
             if (!text) return 'Descrizione non disponibile';
             return text.replace(/\s*(Scadenza:)/gi, '<br><strong style="color:#dc3545;">$1</strong>');
         }
-
-        // --- NUOVA FUNZIONE HELPER PER PARSARE GLI IMPORTI ---
+        
         function parseImporto(importoStr) {
             if (!importoStr || importoStr === 'N/D') return null;
             try {
-                // Rimuove i punti (migliaia), sostituisce la virgola (decimali) con un punto, poi converte in numero
                 return parseFloat(importoStr.replace(/\./g, '').replace(',', '.'));
-            } catch (e) {
-                console.warn(`Impossibile parsare l'importo: ${importoStr}`, e);
-                return null;
-            }
+            } catch (e) { return null; }
         }
 
-        // --- FUNZIONE PER INIZIALIZZARE E AGGIORNARE LA MAPPA ---
         function updateMap() {
             if (!map) {
-                // Inizializza la mappa se non esiste ancora
-                map = L.map('map-container').setView([45.737, 7.320], 10); // Centra su Aosta
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    maxZoom: 18,
-                    attribution: '© OpenStreetMap'
-                }).addTo(map);
-                // Usa un MarkerClusterGroup invece di un LayerGroup standard
-                markersLayer = L.markerClusterGroup({
-                    showCoverageOnHover: false, // Disattiva l'area blu al passaggio del mouse sui cluster
-                    maxClusterRadius: 50 // Raggio di raggruppamento (più basso = meno raggruppamento)
-                }).addTo(map);
+                map = L.map('map-container').setView([45.737, 7.320], 10);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18, attribution: '© OpenStreetMap' }).addTo(map);
+                markersLayer = L.markerClusterGroup({ showCoverageOnHover: false, maxClusterRadius: 50 }).addTo(map);
             }
-
-            markersLayer.clearLayers(); // Pulisci i vecchi marker
+            markersLayer.clearLayers();
 
             fetchedItems.forEach(item => {
                 const data = extractData(item);
-                // Usa il dato grezzo per la mappa
-                const enteNormalized = data.ente_raw ? data.ente_raw.toLowerCase()
-                    .replace('communauté de montagne', 'unite des communes valdotaines')
-                    .replace("unite' des communes valdotaines", 'unite des communes valdotaines') : "";
-                
+                const enteNormalized = data.ente_raw ? data.ente_raw.toLowerCase().replace('communauté de montagne', 'unite des communes valdotaines').replace("unite' des communes valdotaines", 'unite des communes valdotaines') : "";
                 let coords = null;
-                // Cerca corrispondenza esatta o parziale nel dizionario
                 for (const key in comuniVdA) {
-                    if (enteNormalized.includes(key)) {
-                        coords = comuniVdA[key];
-                        if (enteNormalized === key) break;
-                    }
+                    if (enteNormalized.includes(key)) { coords = comuniVdA[key]; if (enteNormalized === key) break; }
                 }
-
                 if (coords) {
-                     // --- CORREZIONE LINK E DATI POPUP ---
                     let linkRaw = item.querySelector("link")?.textContent?.trim() || '#';
                     linkRaw = linkRaw.replace(/\/\/*portale\//g, '/portalegare/');
                     const txt = document.createElement("textarea");
                     txt.innerHTML = linkRaw;
                     linkRaw = txt.value;
-
                     const title = item.querySelector("title")?.textContent || 'Bando';
                     let shortOggetto = data.oggetto.length > 100 ? data.oggetto.substring(0, 100) + '...' : data.oggetto;
-
-                    const popupContent = `
-                        <div style="max-width: 250px;">
-                            <b>${title}</b><br>
-                            <small style="color: #666;">${data.enteProponente}</small><br>
-                            <p style="margin: 8px 0;">${shortOggetto}</p>
-                            <span style="color: #dc3545; font-size: 0.9em;">Scadenza: ${formatDate(data.scadenza)}</span><br>
-                            <a href="${linkRaw}" target="_blank">Vedi dettagli gara &rarr;</a>
-                        </div>
-                    `;
-                    
-                    // Aggiungi il marker al Cluster Group invece che direttamente alla mappa
+                    const popupContent = `<div style="max-width: 250px;"><b>${title}</b><br><small style="color: #666;">${data.enteProponente}</small><br><p style="margin: 8px 0;">${shortOggetto}</p><a href="${linkRaw}" target="_blank">Vedi dettagli gara &rarr;</a></div>`;
                     markersLayer.addLayer(L.marker(coords).bindPopup(popupContent));
                 }
             });
         }
-        
-        // --- FUNZIONE DI VISUALIZZAZIONE PRINCIPALE ---
+
         function displayItems() {
-            // Gestione visibilità dei container in base alla view corrente
             if (currentView === 'mappa') {
                 feedContainer.style.display = 'none';
                 esitoContainer.style.display = 'none';
                 mapWrapper.style.display = 'block';
                 mapContainer.classList.add('active');
-                // Timeout necessario per far renderizzare correttamente la mappa quando diventa visibile
-                setTimeout(() => { 
-                    if (map) map.invalidateSize(); 
-                }, 300); 
-            } else if (currentView === 'cerca-esito') {
-                feedContainer.style.display = 'none';
+                setTimeout(() => { if (map) map.invalidateSize(); updateMap(); }, 300);
+            } else if (currentView === 'esiti-lista') {
+                feedContainer.style.display = 'block';
+                esitoContainer.style.display = 'none'; 
                 mapWrapper.style.display = 'none';
-                esitoContainer.style.display = 'block';
-            } else { // Viste 'sintetico' o 'completo'
+            } else {
                 feedContainer.style.display = 'block';
                 mapWrapper.style.display = 'none';
-                esitoContainer.style.display = 'none';
+                mapContainer.classList.remove('active');
             }
 
-            // Popola solo se la vista non è mappa e non è cerca-esito
-            if (currentView === 'sintetico' || currentView === 'completo') {
-                 feedContainer.innerHTML = '';
+            if (currentView === 'mappa') return;
 
-                 // --- NUOVA LOGICA DI FILTRO LATO CLIENT PER IMPORTO ---
-                const importoDa = parseFloat(document.getElementById('importo-da-input').value) || 0;
-                const importoA = parseFloat(document.getElementById('importo-a-input').value) || Infinity;
+            feedContainer.innerHTML = '';
+            
+            const importoDa = parseFloat(document.getElementById('importo-da-input').value) || 0;
+            const importoA = parseFloat(document.getElementById('importo-a-input').value) || Infinity;
+            
+            const filteredItems = fetchedItems.filter(item => {
+                const data = extractData(item);
+                const importoBando = parseImporto(data.baseAsta);
+                // Nei bandi o esiti, se non c'è importo, lo mostriamo se non c'è filtro attivo
+                if (importoBando === null) return importoDa === 0 && importoA === Infinity;
+                return (importoBando >= importoDa) && (importoBando <= importoA);
+            });
+
+            if (!filteredItems || filteredItems.length === 0) {
+                feedContainer.innerHTML = "<p style='text-align:center; padding: 20px;'>Nessun elemento trovato per i criteri specificati.</p>";
+                nextPageBtn.disabled = true;
+                resultsStatusContainer.innerHTML = `<p id="results-status">Trovati 0 risultati.</p>`;
+                return;
+            }
+            resultsStatusContainer.innerHTML = `<p id="results-status">Trovati ${filteredItems.length} risultati.</p>`;
+
+            filteredItems.forEach(item => {
+                const title = item.querySelector("title")?.textContent || 'N/D';
+                let linkRaw = item.querySelector("link")?.textContent?.trim() || '#';
+                linkRaw = linkRaw.replace(/\/\/*portale\//g, '/portalegare/');
+                const txt = document.createElement("textarea");
+                txt.innerHTML = linkRaw;
+                linkRaw = txt.value;
                 
-                const filteredItems = fetchedItems.filter(item => {
+                const cardDiv = document.createElement('div');
+                // Usa synthetic card style sia per bandi che per esiti
+                const isSynthetic = currentView === 'sintetico' || currentView === 'esiti-lista';
+                cardDiv.className = `feed-item ${isSynthetic ? 'synthetic-card' : 'full-card'}`;
+
+                if (isSynthetic) {
                     const data = extractData(item);
-                    const importoBando = parseImporto(data.baseAsta);
+                    const dateLabel = currentMode === 'bandi' ? 'Scadenza' : 'Pubblicazione';
+                    const dateValue = currentMode === 'bandi' ? formatDate(data.scadenza) : formatDate(data.pubblicazione);
 
-                    // Se l'importo non è parsabile (es. 'N/D'), lo escludiamo dal filtro range
-                    if (importoBando === null) {
-                        // Se l'utente non ha messo filtri (0 e Infinity), mostriamo anche N/D
-                        return importoDa === 0 && importoA === Infinity;
+                    cardDiv.innerHTML = `
+                        <div class="synthetic-header">
+                            <h3 class="synthetic-title">${title}</h3>
+                            <div class="synthetic-badges">
+                                ${data.esito ? `<span class="badge badge-esito">${data.esito}</span>` : ''}
+                                ${data.cig ? `<span class="badge badge-cig">CIG: ${data.cig}</span>` : ''}
+                            </div>
+                        </div>
+                        <div class="synthetic-body">
+                            <div class="info-group" style="grid-column: 1 / -1;">
+                                <span class="info-label">Ente Appaltante</span>
+                                <span class="info-value ente">${data.enteAppaltante}</span>
+                            </div>
+                            <div class="info-group" style="grid-column: 1 / -1;">
+                                <span class="info-label">Oggetto</span>
+                                <span class="info-value oggetto">${formatOggetto(data.oggetto)}</span>
+                            </div>
+                            <div class="info-group">
+                                <span class="info-label">Base d'Asta</span>
+                                <span class="info-value importo">${data.baseAsta}</span>
+                            </div>
+                            <div class="info-group">
+                                <span class="info-label">${dateLabel}</span>
+                                <span class="info-value scadenza">${dateValue}</span>
+                            </div>
+                             <div class="info-group">
+                                <span class="info-label">Tipologia</span>
+                                <span class="info-value">${data.contratto}</span>
+                            </div>
+                        </div>
+                        <div class="synthetic-footer">
+                            <a href="${linkRaw}" target="_blank" rel="noopener noreferrer" class="btn-details">Dettaglio</a>
+                        </div>
+                    `;
+                } else {
+                    let dlContent = '';
+                    for (const node of item.children) {
+                        if (node.tagName !== 'title' && node.tagName !== 'link') dlContent += `<dt>${node.tagName}</dt><dd>${node.textContent}</dd>`;
                     }
-                    
-                    return (importoBando >= importoDa) && (importoBando <= importoA);
-                });
-                // --- FINE LOGICA FILTRO ---
-
-
-                 if (!filteredItems || filteredItems.length === 0) { // Modificato: usa filteredItems
-                    feedContainer.innerHTML = "<p style='text-align:center; padding: 20px;'>Nessun elemento trovato per i criteri specificati.</p>";
-                    nextPageBtn.disabled = true;
-                    // Aggiorniamo comunque il contatore (anche se è 0)
-                    resultsStatusContainer.innerHTML = `<p id="results-status">Trovati 0 risultati che corrispondono ai filtri in questa pagina.</p>`;
-                    return;
+                    cardDiv.innerHTML = `<h2><a href="${linkRaw}" target="_blank">${title}</a></h2><dl>${dlContent}</dl>`;
                 }
-                // Modificato: usa filteredItems
-                resultsStatusContainer.innerHTML = `<p id="results-status">Trovati ${filteredItems.length} risultati che corrispondono ai filtri in questa pagina.</p>`;
-                try {
-                    // Modificato: itera su filteredItems invece di fetchedItems
-                    filteredItems.forEach(item => {
-                        const title = item.querySelector("title")?.textContent || 'N/D';
-                        let linkRaw = item.querySelector("link")?.textContent?.trim() || '#';
-                        linkRaw = linkRaw.replace(/\/\/*portale\//g, '/portalegare/');
-                        const txt = document.createElement("textarea");
-                        txt.innerHTML = linkRaw;
-                        linkRaw = txt.value;
-                        
-                        const cardDiv = document.createElement('div');
-                        cardDiv.className = `feed-item ${currentView === 'sintetico' ? 'synthetic-card' : 'full-card'}`;
-
-                        if (currentView === 'sintetico') {
-                            const data = extractData(item);
-                            cardDiv.innerHTML = `
-                                <div class="synthetic-header">
-                                    <h3 class="synthetic-title">${title}</h3>
-                                    <div class="synthetic-badges">
-                                        ${data.esito ? `<span class="badge badge-esito">${data.esito}</span>` : ''}
-                                        ${data.cig ? `<span class="badge badge-cig">CIG: ${data.cig}</span>` : ''}
-                                    </div>
-                                </div>
-                                <div class="synthetic-body">
-                                    <!-- MODIFICA: Mostra entrambi gli enti -->
-                                    <div class="info-group" style="grid-column: 1 / -1;">
-                                        <span class="info-label">Ente Proponente</span>
-                                        <span class="info-value ente">${data.enteProponente}</span>
-                                    </div>
-                                    <div class="info-group" style="grid-column: 1 / -1;">
-                                        <span class="info-label">Ente Appaltante</span>
-                                        <span class="info-value ente">${data.enteAppaltante}</span>
-                                    </div>
-                                    <div class="info-group" style="grid-column: 1 / -1;">
-                                        <span class="info-label">Oggetto del Bando</span>
-                                        <span class="info-value oggetto">${formatOggetto(data.oggetto)}</span>
-                                    </div>
-                                    <div class="info-group">
-                                        <span class="info-label">Base d'Asta</span>
-                                        <span class="info-value importo">${data.baseAsta}</span>
-                                    </div>
-                                    <div class="info-group">
-                                        <span class="info-label">Scadenza Bando</span>
-                                        <span class="info-value scadenza">${formatDate(data.scadenza)}</span>
-                                    </div>
-                                     <div class="info-group">
-                                        <span class="info-label">Tipologia</span>
-                                        <span class="info-value">${data.contratto}</span>
-                                    </div>
-                                </div>
-                                <div class="synthetic-footer">
-                                    <a href="${linkRaw}" target="_blank" rel="noopener noreferrer" class="btn-details">Vedi Dettagli Gara &rarr;</a>
-                                </div>
-                            `;
-                        } else {
-                            let dlContent = '';
-                            for (const node of item.children) {
-                                if (node.tagName !== 'title' && node.tagName !== 'link') dlContent += `<dt>${node.tagName}</dt><dd>${node.textContent}</dd>`;
-                            }
-                            cardDiv.innerHTML = `<h2><a href="${linkRaw}" target="_blank">${title}</a></h2><dl>${dlContent}</dl>`;
-                        }
-                        feedContainer.appendChild(cardDiv);
-                    });
-                } catch (error) { console.error("Errore visualizzazione:", error); }
-            }
+                feedContainer.appendChild(cardDiv);
+            });
         }
 
         function extractData(itemXml) {
@@ -1326,7 +952,6 @@
                 return null;
             };
             
-            // Estrae entrambi i campi
             const enteProponente = getSafe(['afs:EnteProponente', 'ente', 'amministrazione']);
             const enteAppaltante = getSafe(['afs:DenominazioneEnte', 'denominazioneente']);
 
@@ -1335,185 +960,89 @@
                 cig: getSafe(['afs:CIG', 'CIG', 'cig']),
                 enteProponente: enteProponente || 'N/D',
                 enteAppaltante: enteAppaltante || 'N/D', 
-                ente_raw: enteProponente, // Per la logica della mappa
+                ente_raw: enteProponente,
                 oggetto: getSafe(['afs:Oggetto', 'description', 'oggetto', 'titolo']),
                 baseAsta: getSafe(['afs:a_base_asta', 'importo', 'basedasta']) || 'N/D',
                 contratto: getSafe(['afs:Contratto', 'tipologia', 'contratto']) || 'N/D',
-                scadenza: getSafe(['afs:DtScadenzaBandoTecnical', 'afs:dtscadenza', 'dtscadenza', 'scadenza']) || 'N/D'
+                scadenza: getSafe(['afs:DtScadenzaBandoTecnical', 'afs:dtscadenza', 'dtscadenza', 'scadenza']) || 'N/D',
+                pubblicazione: getSafe(['dtpubblicazione', 'afs:DtPubblicazione', 'pubDate']) || 'N/D'
             };
         }
 
-        // --- FUNZIONE DI FETCH GENERICA (riutilizzata da entrambi) ---
-        async function fetchProxy(url) {
-            const ts = Date.now();
-            const TIMEOUT_MS = 30000; 
-            const proxies = [
-                { url: `https://api.allorigins.win/get?url=${encodeURIComponent(url)}&_t=${ts}`, type: 'json' },
-                { url: `https://corsproxy.io/?${encodeURIComponent(url)}`, type: 'text' },
-                { url: `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`, type: 'text'},
-                { url: `https://thingproxy.freeboard.io/fetch/${url}`, type: 'text' },
-                { url: `https://cors.eu.org/${url}`, type: 'text' }
-            ];
-
-            for (const proxy of proxies) {
-                try {
-                    const controller = new AbortController();
-                    const id = setTimeout(() => controller.abort(), TIMEOUT_MS);
-                    const res = await fetch(proxy.url, { signal: controller.signal, cache: 'no-store' });
-                    clearTimeout(id);
-                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-                    
-                    const xmlStr = proxy.type === 'json' ? (await res.json()).contents : await res.text();
-                    if (!xmlStr || xmlStr.trim().length < 50 || (!xmlStr.includes('<rss') && !xmlStr.includes('<feed') && !xmlStr.startsWith('<?xml'))) {
-                         throw new Error("Risposta invalida o non XML");
-                    }
-                    const xmlDoc = new DOMParser().parseFromString(xmlStr, "application/xml");
-                    if (xmlDoc.querySelector("parsererror")) throw new Error("XML non valido");
-                    return xmlDoc; // Successo! Restituisce il documento XML
-                } catch (e) { console.warn(`Proxy fallito: ${proxy.url}`, e); }
-            }
-            throw new Error("Tutti i proxy falliti");
-        }
-
-        // --- FUNZIONE CARICAMENTO BANDI (per tab 1, 2, 3) ---
         async function fetchFeed() {
-            // Mostra indicatore di caricamento appropriato
             if (currentView === 'mappa') {
                 mapLoadingOverlay.classList.add('active');
             } else {
-                 feedContainer.innerHTML = `<div class="loading-container"><div class="loading-spinner"></div><div class="loading-text">Caricamento gare...</div></div>`;
+                 feedContainer.innerHTML = `<div class="loading-container"><div class="loading-spinner"></div><div class="loading-text">Caricamento dati...</div></div>`;
             }
             resultsStatusContainer.innerHTML = '';
             paginationControls.style.display = 'none';
-            disableFilters(); // <-- DISABILITA I FILTRI
+            disableFilters();
             
             const feedUrl = buildUrl();
-            try {
-                const xmlDoc = await fetchProxy(feedUrl);
-                fetchedItems = Array.from(xmlDoc.querySelectorAll("item"));
-                
-                displayItems();
-                updateMap(); // Aggiorna i dati della mappa
-                
-                mapLoadingOverlay.classList.remove('active');
-                nextPageBtn.disabled = fetchedItems.length < numResultsInput.value;
-                currentPageSpan.textContent = `Pagina ${currentPage}`;
-                paginationControls.style.display = 'flex';
-            } catch (error) {
-                handleError(error);
-            } finally {
-                enableFilters(); // <-- RIATTIVA I FILTRI (sia in caso di successo che di errore)
-            }
-        }
-        
-        // --- FUNZIONE CARICAMENTO ESITI (per tab 4) ---
-        async function fetchEsitoByCig() {
-            const cig = document.getElementById('cig-input').value.trim();
-            if (!cig) {
-                esitoContainer.innerHTML = '<p class="error-message">Devi inserire un CIG per la ricerca.</p>';
-                return;
-            }
-            
-            esitoContainer.innerHTML = `<div class="loading-container"><div class="loading-spinner"></div><div class="loading-text">Ricerca esito per CIG: ${cig}...</div></div>`;
-            resultsStatusContainer.innerHTML = '';
-            paginationControls.style.display = 'none';
-            disableFilters(); // <-- DISABILITA I FILTRI
-            
-            const feedUrl = buildEsitoUrl(cig);
-            try {
-                const xmlDoc = await fetchProxy(feedUrl);
-                const esitiItems = Array.from(xmlDoc.querySelectorAll("item"));
-                
-                if (esitiItems.length === 0) {
-                    esitoContainer.innerHTML = `<p style="text-align:center; padding: 20px;">Nessun esito trovato per il CIG: ${cig}</p>`;
-                    return;
-                }
-                
-                let html = '<ul>';
-                esitiItems.forEach(item => {
-                    const title = item.querySelector("title")?.textContent || 'Esito';
-                    const description = item.querySelector("description")?.textContent || 'Dettagli non disponibili';
-                    let linkRaw = item.querySelector("link")?.textContent?.trim() || '#';
-                    linkRaw = linkRaw.replace(/\/\/*portale\//g, '/portalegare/');
-                    const txt = document.createElement("textarea");
-                    txt.innerHTML = linkRaw;
-                    linkRaw = txt.value;
-                    
-                    html += `
-                        <li>
-                            <div class="esito-info">
-                                <strong>${title}</strong>
-                                <p>${description}</p>
-                            </div>
-                            <div class="esito-link">
-                                <a href="${linkRaw}" target="_blank" rel="noopener noreferrer" class="btn-details">Dettaglio</a>
-                            </div>
-                        </li>
-                    `;
-                });
-                html += '</ul>';
-                esitoContainer.innerHTML = html;
+            const ts = Date.now();
+            const proxies = [
+                { url: `https://api.allorigins.win/get?url=${encodeURIComponent(feedUrl)}&_t=${ts}`, type: 'json' },
+                { url: `https://corsproxy.io/?${encodeURIComponent(feedUrl)}`, type: 'text' },
+                { url: `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(feedUrl)}`, type: 'text'},
+                { url: `https://thingproxy.freeboard.io/fetch/${feedUrl}`, type: 'text' },
+                { url: `https://cors.eu.org/${feedUrl}`, type: 'text' }
+            ];
 
-            } catch (error) {
-                esitoContainer.innerHTML = `<div class="error-message">Impossibile caricare il feed. I servizi esterni non rispondono.<br><button id="retry-btn-esito">Riprova</button></div>`;
-                document.getElementById('retry-btn-esito').addEventListener('click', fetchEsitoByCig);
-            } finally {
-                enableFilters(); // <-- RIATTIVA I FILTRI (sia in caso di successo che di errore)
+            let success = false;
+            for (const proxy of proxies) {
+                try {
+                    const controller = new AbortController();
+                    const id = setTimeout(() => controller.abort(), 30000);
+                    const res = await fetch(proxy.url, { signal: controller.signal, cache: 'no-store' });
+                    clearTimeout(id);
+                    if (res.status === 403 && proxy.url.includes('cors-anywhere')) continue;
+                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                    const xmlStr = proxy.type === 'json' ? (await res.json()).contents : await res.text();
+                    if (!xmlStr || xmlStr.trim().length < 50 || (!xmlStr.includes('<rss') && !xmlStr.includes('<feed') && !xmlStr.startsWith('<?xml'))) throw new Error("XML invalido");
+                    const xmlDoc = new DOMParser().parseFromString(xmlStr, "application/xml");
+                    if (xmlDoc.querySelector("parsererror")) throw new Error("XML parser error");
+
+                    fetchedItems = Array.from(xmlDoc.querySelectorAll("item"));
+                    displayItems();
+                    if (currentView === 'mappa' && currentMode === 'bandi') updateMap(); 
+
+                    mapLoadingOverlay.classList.remove('active');
+                    nextPageBtn.disabled = fetchedItems.length < numResultsInput.value;
+                    currentPageSpan.textContent = `Pagina ${currentPage}`;
+                    paginationControls.style.display = 'flex';
+                    success = true;
+                    break;
+                } catch (e) { console.warn(`Proxy fallito: ${proxy.url}`, e); }
             }
+            if (!success) handleError(new Error("Tutti i proxy falliti"));
+            enableFilters();
         }
 
         function handleError(lastError) {
             console.error("Errore caricamento:", lastError);
-            let msg = "Impossibile caricare il feed. I servizi esterni non rispondono.";
+            let msg = "Impossibile caricare i dati. I servizi esterni non rispondono.";
             feedContainer.innerHTML = `<div class="error-message">${msg}<br><button id="retry-btn">Riprova</button></div>`;
             mapLoadingOverlay.classList.remove('active');
-            enableFilters(); // <-- RIATTIVA I FILTRI IN CASO DI ERRORE
             document.getElementById('retry-btn').addEventListener('click', fetchFeed);
         }
 
         // --- EVENT LISTENERS ---
-        searchForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            if (currentView === 'cerca-esito') {
-                fetchEsitoByCig();
-            } else {
-                currentPage = 1;
-                fetchFeed();
-            }
-        });
-        
-        // NUOVO LISTENER PER IL RESET
+        searchForm.addEventListener('submit', (e) => { e.preventDefault(); currentPage = 1; fetchFeed(); });
         resetFiltersBtn.addEventListener('click', () => {
-             // Resetta campi di testo
             document.getElementById('cig-input').value = '';
             document.getElementById('oggetto-input').value = '';
-            
-            // Resetta menu a tendina
             enteProponenteSelect.value = '';
             enteAppaltanteSelect.value = '';
-            
-            // Resetta campi range
             document.getElementById('importo-da-input').value = '';
             document.getElementById('importo-a-input').value = '';
             document.getElementById('data-da-input').value = '';
             document.getElementById('data-a-input').value = '';
-
-            // Resetta pillole Categoria
-            contractPills.forEach(p => p.classList.remove('active'));
-            selectedContractType = '';
-
-            // Resetta pillole Merceologiche
-            merceologicaPills.forEach(p => p.classList.remove('active'));
-            selectedMerceologica = '';
-            
-            // Resetta paginazione e risultati
-            numResultsInput.value = '10'; // Resetta al default
+            contractPills.forEach(p => p.classList.remove('active')); selectedContractType = '';
+            merceologicaPills.forEach(p => p.classList.remove('active')); selectedMerceologica = '';
+            numResultsInput.value = '10';
             currentPage = 1;
-            
-            // Ricarica i dati solo se non siamo nel tab esito
-            if (currentView !== 'cerca-esito') {
-                fetchFeed(); // Questo chiamerà disableFilters()
-            }
+            fetchFeed();
         });
 
         prevPageBtn.addEventListener('click', () => { if (currentPage > 1) { currentPage--; fetchFeed(); } });
@@ -1523,54 +1052,24 @@
             tabButtons.forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             currentView = btn.dataset.view;
-
-            // Logica per mostrare/nascondere elementi
-            if (currentView === 'cerca-esito') {
-                searchForm.classList.add('esito-mode');
-                paginationControls.style.display = 'none';
-                resultsStatusContainer.innerHTML = '';
-            } else {
-                searchForm.classList.remove('esito-mode');
-                // La paginazione verrà mostrata da fetchFeed se ci sono risultati
-            }
-            
-            // Se passo alla vista mappa, assicuriamoci che sia aggiornata e visibile
-            if (currentView === 'mappa') {
-                updateMap();
-            }
-            displayItems(); // Ridisegna l'interfaccia 
+            displayItems();
         }));
 
-        // --- MODIFICA: Due listener separati per i gruppi di pillole ---
         contractPills.forEach(pill => pill.addEventListener('click', () => {
-            if (pill.classList.contains('active')) {
-                pill.classList.remove('active');
-                selectedContractType = '';
-            } else {
-                contractPills.forEach(p => p.classList.remove('active'));
-                pill.classList.add('active');
-                selectedContractType = pill.dataset.cat;
-            }
-            currentPage = 1;
-            fetchFeed();
+            if (pill.classList.contains('active')) { pill.classList.remove('active'); selectedContractType = ''; }
+            else { contractPills.forEach(p => p.classList.remove('active')); pill.classList.add('active'); selectedContractType = pill.dataset.cat; }
+        }));
+        merceologicaPills.forEach(pill => pill.addEventListener('click', () => {
+            if (pill.classList.contains('active')) { pill.classList.remove('active'); selectedMerceologica = ''; }
+            else { merceologicaPills.forEach(p => p.classList.remove('active')); pill.classList.add('active'); selectedMerceologica = pill.dataset.cat; }
         }));
 
-        merceologicaPills.forEach(pill => pill.addEventListener('click', () => {
-            if (pill.classList.contains('active')) {
-                pill.classList.remove('active');
-                selectedMerceologica = '';
-            } else {
-                merceologicaPills.forEach(p => p.classList.remove('active'));
-                pill.classList.add('active');
-                selectedMerceologica = pill.dataset.cat;
-            }
-            currentPage = 1;
-            fetchFeed();
-        }));
-        // --- FINE MODIFICA ---
+        btnModeBandi.addEventListener('click', () => { if (currentMode !== 'bandi') { currentMode = 'bandi'; currentPage = 1; updateModeUI(); fetchFeed(); } });
+        btnModeEsiti.addEventListener('click', () => { if (currentMode !== 'esiti') { currentMode = 'esiti'; currentPage = 1; updateModeUI(); fetchFeed(); } });
 
         document.addEventListener("DOMContentLoaded", () => {
-             populateEnteSelects(); // Chiamata alla nuova funzione
+             populateEnteSelects();
+             updateModeUI();
              fetchFeed();
         });
     </script>
