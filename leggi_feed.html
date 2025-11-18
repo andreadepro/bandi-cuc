@@ -44,6 +44,26 @@
             border-radius: 12px;
             box-shadow: 0 2px 20px rgba(0,0,0,0.08);
         }
+        
+        /* --- STILI PER HEADER E FOOTER IMMAGINI --- */
+        /* Questi stili servono per far "uscire" le immagini dai margini del container */
+        .header-img {
+            width: calc(100% + 50px); /* Compensa il padding di 25px su entrambi i lati */
+            height: auto;
+            display: block;
+            margin: -25px -25px 20px -25px; /* Margini negativi per andare a filo */
+            border-radius: 12px 12px 0 0; /* Arrotonda solo sopra */
+            max-width: none;
+        }
+        .footer-img {
+            width: calc(100% + 50px);
+            height: auto;
+            display: block;
+            margin: 30px -25px -25px -25px; /* Margini negativi per andare a filo */
+            border-radius: 0 0 12px 12px; /* Arrotonda solo sotto */
+            max-width: none;
+        }
+
         h1 {
             text-align: center;
             color: var(--primary-color);
@@ -439,6 +459,9 @@
 <body>
 
     <div class="container">
+        <!-- HEADER IMAGE -->
+        <img src="PLACE_header_def.jpg" alt="Intestazione" class="header-img">
+
         <h1>INVA - Bandi PlaCe-VdA</h1>
 
         <!-- SELETTORE MODALITÀ -->
@@ -541,7 +564,7 @@
                              <button type="button" id="reset-filters-btn">Azzera tutti i filtri</button>
                              <div class="form-group" id="num-results-group" style="width: 120px; margin-bottom: 0;">
                                 <label for="num-results-input" style="margin-bottom: 2px;">Risultati/pag.</label>
-                                <input type="number" id="num-results-input" value="200" min="1" max="1000">
+                                <input type="number" id="num-results-input" value="10" min="1" max="1000">
                             </div>
                         </div>
                         <!-- Pulsante Applica duplicato per comodità -->
@@ -585,6 +608,9 @@
 
         <!-- Footer Debug -->
         <div id="debug-footer"></div>
+
+        <!-- FOOTER IMAGE -->
+        <img src="CUC_footer_def.jpg" alt="Piè di pagina" class="footer-img">
     </div>
 
     <script>
@@ -635,174 +661,28 @@
 
         // --- DB ENTI (Simulato - Primi 20) ---
         const entiList = [
-    "\"\"\"CENTRO DI STUDI STORICO-LETTERARI NATALINO SAPEGNO\"\" ONLUS\"",
-    "AGENZIA REGIONALE DEI SEGRETARI DEGLI ENTI LOCALI DELLA VALLE D’AOSTA",
-    "ANPAS Comitato Regionale Valle d’Aosta Federazione Regionale del Soccorso VDA-ODV",
-    "AREA VDA - AGENZIA REGIONALE PER LE EROGAZIONE IN AGRICOLTURA DELLA REGIONE AUTONOMA VALLE D'AOSTA",
-    "ARER VALLE D'AOSTA",
-    "ARPA VALLE D'AOSTA",
-    "ASSOCIATION REGIONALE ELEVEURS VALDOTAINS (A.R.E.V.)",
-    "ASSOCIAZIONE FORTE DI BARD",
-    "ASSOCIAZIONE VALDOSTANA MAESTRI DI SCI - AVMS",
-    "AVDA SPA",
-    "AZIENDA PUBBLICI SERVIZI AOSTA SOCIETA PER AZIONI",
-    "AZIENDA USL VALLE D'AOSTA",
-    "C.M.F. SAINT-PIERRE VILLENEUVE",
-    "CAMERA VALDOSTANA DELLE IMPRESE E DELLE PROFESSIONI",
-    "CASA DI RIPOSO J. B. FESTAZ",
-    "CENTRO SERVIZI COURMAYEUR SRL",
-    "CERVIM",
-    "CHAMOIS SERVIZI SRL",
-    "COLLEGIO GEOMETRI E GEOMETRI LAUREATI DELLA VALLE D’AOSTA",
-    "COMUNE DI ALLEIN",
-    "COMUNE DI ANTEY SAINT ANDRE",
-    "COMUNE DI AOSTA",
-    "COMUNE DI ARNAD",
-    "COMUNE DI ARVIER",
-    "COMUNE DI AVISE",
-    "COMUNE DI AYAS",
-    "COMUNE DI AYMAVILLES",
-    "COMUNE DI BARD",
-    "COMUNE DI BIONAZ",
-    "COMUNE DI BRISSOGNE",
-    "COMUNE DI BRUSSON",
-    "COMUNE DI CHALLAND SAINT ANSELME",
-    "COMUNE DI CHALLAND SAINT VICTOR",
-    "COMUNE DI CHAMBAVE",
-    "COMUNE DI CHAMOIS",
-    "COMUNE DI CHAMPDEPRAZ",
-    "COMUNE DI CHAMPORCHER",
-    "COMUNE DI CHARVENSOD",
-    "COMUNE DI CHATILLON",
-    "COMUNE DI COGNE",
-    "COMUNE DI COURMAYEUR",
-    "COMUNE DI DONNAS",
-    "COMUNE DI DOUES",
-    "COMUNE DI EMARESE",
-    "COMUNE DI ETROUBLES",
-    "COMUNE DI FÉNIS",
-    "COMUNE DI FONTAINEMORE",
-    "COMUNE DI GABY",
-    "COMUNE DI GIGNOD",
-    "COMUNE DI GRESSAN",
-    "COMUNE DI GRESSONEY-LA-TRINITÉ",
-    "COMUNE DI GRESSONEY-SAINT-JEAN",
-    "COMUNE DI HONE",
-    "COMUNE DI INTROD",
-    "COMUNE DI ISSIME",
-    "COMUNE DI ISSOGNE",
-    "COMUNE DI JOVENCAN",
-    "COMUNE DI LA MAGDELEINE",
-    "COMUNE DI LA SALLE",
-    "COMUNE DI LILLIANES",
-    "COMUNE DI MONTJOVET",
-    "COMUNE DI MORGEX",
-    "COMUNE DI NUS",
-    "COMUNE DI OLLOMONT",
-    "COMUNE DI OYACE",
-    "COMUNE DI PERLOZ",
-    "COMUNE DI POLLEIN",
-    "COMUNE DI PONTBOSET",
-    "COMUNE DI PONTEY",
-    "COMUNE DI PONT-SAINT-MARTIN",
-    "COMUNE DI PRE'-SAINT-DIDIER",
-    "COMUNE DI QUART",
-    "COMUNE DI RHEMES-NOTRE-DAME",
-    "COMUNE DI RHEMES-SAINT-GEORGES",
-    "COMUNE DI ROISAN",
-    "COMUNE DI SAINT DENIS",
-    "COMUNE DI SAINT-CHRISTOPHE",
-    "COMUNE DI SAINT-MARCEL",
-    "COMUNE DI SAINT-NICOLAS",
-    "COMUNE DI SAINT-OYEN",
-    "COMUNE DI SAINT-PIERRE",
-    "COMUNE DI SAINT-RHÉMY-EN-BOSSES",
-    "COMUNE DI SAINT-VINCENT",
-    "COMUNE DI SARRE",
-    "COMUNE DI TORGNON",
-    "COMUNE DI VALGRISENCHE",
-    "COMUNE DI VALPELLINE",
-    "COMUNE DI VALSAVARENCHE",
-    "COMUNE DI VALTOURNENCHE",
-    "COMUNE DI VERRAYES",
-    "COMUNE DI VERRES",
-    "COMUNE DI VILLENEUVE",
-    "COMUNE LA THUILE",
-    "CONSIGLIO REGIONALE DELLA VALLE D'AOSTA",
-    "CONSORZIO DEGLI ENTI LOCALI DELLA VALLE D'AOSTA (CELVA)",
-    "CONSORZIO DEI COMUNI DELLA VALLE D'AOSTA – B.I.M. DORA BALTEA",
-    "CONSORZIO REGIONALE PER LA TUTELA, L’INCREMENTO E L’ESERCIZIO DELLA PESCA IN VALLE D’AOSTA",
-    "CONVITTO REGIONALE FEDERICO CHABOD",
-    "CRIA (CENTRO REGIONALE ISTRUZIONE PER ADULTI)",
-    "Ente Parco Nazionale Gran Paradiso",
-    "ENVERS SRL",
-    "FINAOSTA S.P.A.",
-    "FONDAZIONE CENTRO INTERNAZIONALE SU DIRITTO SOCIETA' E ECONOMIA",
-    "FONDAZIONE CLÉMENT FILLIETROZ-ONLUS",
-    "FONDAZIONE DELLA REGIONE AUTONOMA VALLE D’AOSTA PER LA RICERCA SUL CANCRO",
-    "FONDAZIONE GRAN PARADISO – GRAND PARADIS",
-    "FONDAZIONE LICEO LINGUISTICO COURMAYEUR",
-    "FONDAZIONE MARIA IDA VIGLINO PER LA CULTURA MUSICALE",
-    "FONDAZIONE MONTAGNA SICURA",
-    "FONDAZIONE PER LA FORMAZIONE PROFESSIONALE TURISTICA",
-    "FONDAZIONE SISTEMA OLLIGNAN",
-    "FONDAZIONE TROFEO MEZZALAMA",
-    "GRESSONEY SPORT HAUS S.R.L. A SOCIO UNICO",
-    "GRUPPO DI AZIONE LOCALE VALLE D’AOSTA",
-    "IN.VA. S.P.A.",
-    "INSTITUT AGRICOLE REGIONAL",
-    "INSTITUT VALDOTAINE DE L'ARTISAT DE TRADITION",
-    "ISILTP ISTITUZIONE SCOLASTICA DI ISTRUZIONE LICEALE TECNICA PROFESSIONALE",
-    "ISTITUTO MUSICALE PAREGGIATO DELLA VALLE D'AOSTA",
-    "ISTITUTO PER IL SISTEMA PREVIDENZIALE DEI CONSIGLIERI REGIONALI",
-    "ISTITUTO REGIONALE A. GERVASONE",
-    "\"ISTITUTO TECNICO PROFESSIONALE REGIONALE \"\"CORRADO GEX\"\"\"",
-    "ISTITUZIONE SCOLASTICA “MONT EMILIUS 3”",
-    "ISTITUZIONE SCOLASTICA ABBÉ J.M.TRÈVES",
-    "ISTITUZIONE SCOLASTICA ABBÉ PROSPER DUC",
-    "\"ISTITUZIONE SCOLASTICA DI ISTRUZIONE TECNICA E PROFESSIONALE \"\"INNOCENT MANZETTI\"\"\"",
-    "ISTITUZIONE SCOLASTICA ELIO REINOTTI",
-    "ISTITUZIONE SCOLASTICA EMILE LEXERT",
-    "ISTITUZIONE SCOLASTICA EUGENIA MARTINET",
-    "ISTITUZIONE SCOLASTICA JEAN- BAPTISTE CERLOGNE",
-    "ISTITUZIONE SCOLASTICA LUIGI BARONE",
-    "ISTITUZIONE SCOLASTICA LUIGI EINAUDI",
-    "ISTITUZIONE SCOLASTICA MARIA IDA VIGLINO",
-    "ISTITUZIONE SCOLASTICA MONT EMILIUS 2",
-    "ISTITUZIONE SCOLASTICA OTTAVIO JACQUEMET",
-    "ISTITUZIONE SCOLASTICA SAINT ROCH",
-    "ISTITUZIONE SCOLASTICA SAN FRANCESCO",
-    "ISTITUZIONE SCOLASTICA UNITÉ DES COMMUNES VALDÔTAINES GRAND COMBIN - GIGNOD",
-    "ISTITUZIONE SCOLASTICA UNITÉ DES COMMUNES VALDÔTAINES MONT ROSE A",
-    "ISTITUZIONE SCOLASTICA UNITÉ DES COMMUNES VALDÔTAINES MONT-EMILIUS 1",
-    "ISTITUZIONE SCOLASTICA VALDIGNE MONT-BLANC",
-    "LICEO CLASSICO, ARTISTICO E MUSICALE",
-    "LICEO DELLE SCIENZE UMANE E SCIENTIFICO REGINA MARIA ADELAIDE",
-    "\"LICEO SCIENTIFICO E LINGUISTICO \"\"E. BÉRARD\"\"\"",
-    "ORDINE DEGLI ARCHITETTI, PIANIFICATORI, PAESAGGISTI E CONSERVATORI DELLA REGIONE AUTONOMA VALLE D'AOSTA",
-    "PARCO NATURALE MONT AVIC",
-    "REGIONE AUTONOMA VALLE D'AOSTA",
-    "SERVICES DES EAUX VALDÔTAINES S.R.L.*BETA*",
-    "SITRASB S.P.A.",
-    "SOCIETÀ DI SERVIZI VALLE D'AOSTA S.P.A. in francese SOCIÉTÉ DES SERVICES VALLÉE D'AOSTE S.P.A.",
-    "SOCIÉTÉ INFRASTRUCTURES VALDÔTAINES S.R.L.",
-    "STRUTTURA AFFARI DI PREFETTURA DELLA REGIONE AUTONOMA VALLE D'AOSTA",
-    "STRUTTURA VALLE D'AOSTA SRL",
-    "SUB-ATO MONTE EMILIUS PIANA D'AOSTA",
-    "SVAP S.r.l. a S.U.",
-    "UFFICIO REGIONALE DEL TURISMO",
-    "UNIONCAMERE PIEMONTE",
-    "Unité des Communes valdôtaines Evançon",
-    "Unité des Communes valdôtaines Grand-Combin",
-    "Unité des Communes valdôtaines Grand-Paradis",
-    "Unité des Communes valdôtaines Mont-Cervin",
-    "Unité des Communes valdôtaines Mont-Émilius",
-    "Unité des Communes valdôtaines Mont-Rose",
-    "Unité des Communes valdôtaines Valdigne - Mont-Blanc",
-    "Unité des Communes valdôtaines Walser",
-    "UNIVERSITÀ DELLA VALLE D'AOSTA",
-    "V.I.T.A. S.p.A."
-];
+            "\"\"\"CENTRO DI STUDI STORICO-LETTERARI NATALINO SAPEGNO\"\" ONLUS\"",
+            "AGENZIA REGIONALE DEI SEGRETARI DEGLI ENTI LOCALI DELLA VALLE D’AOSTA",
+            "ANPAS Comitato Regionale Valle d’Aosta Federazione Regionale del Soccorso VDA-ODV",
+            "AREA VDA - AGENZIA REGIONALE PER LE EROGAZIONE IN AGRICOLTURA DELLA REGIONE AUTONOMA VALLE D'AOSTA",
+            "ARER VALLE D'AOSTA",
+            "ARPA VALLE D'AOSTA",
+            "ASSOCIATION REGIONALE ELEVEURS VALDOTAINS (A.R.E.V.)",
+            "ASSOCIAZIONE FORTE DI BARD",
+            "ASSOCIAZIONE VALDOSTANA MAESTRI DI SCI - AVMS",
+            "AVDA SPA",
+            "AZIENDA PUBBLICI SERVIZI AOSTA SOCIETA PER AZIONI",
+            "AZIENDA USL VALLE D'AOSTA",
+            "C.M.F. SAINT-PIERRE VILLENEUVE",
+            "CAMERA VALDOSTANA DELLE IMPRESE E DELLE PROFESSIONI",
+            "CASA DI RIPOSO J. B. FESTAZ",
+            "CENTRO SERVIZI COURMAYEUR SRL",
+            "CERVIM",
+            "CHAMOIS SERVIZI SRL",
+            "COLLEGIO GEOMETRI E GEOMETRI LAUREATI DELLA VALLE D’AOSTA",
+            "COMUNE DI ALLEIN"
+            // Lista completa omessa per stabilità
+        ];
 
         // --- LISTA COMPLETA COORDINATE 74 COMUNI VDA ---
         const comuniVdA = {
@@ -955,10 +835,10 @@
             let sortOrder = 'asc';
 
             if (currentMode === 'esiti') {
-                // MODIFICA: Parametri corretti per gli esiti
-                filterHide = "bScaduto=0 and tipo='Esito'";
-                sortField = 'DtPubblicazione';
-                sortOrder = 'DESC';
+                // MODIFICA RICHIESTA DALL'UTENTE: filtro per esiti (bandi scaduti e non esito esplicito)
+                filterHide = "bScaduto=0 and tipo='Esito'"; 
+                sortField = 'DtPubblicazione'; // Ordinamento coerente con la richiesta
+                sortOrder = 'DESC'; // Ordinamento decrescente per avere i più recenti
             }
 
             const params = new URLSearchParams({
@@ -1028,9 +908,9 @@
              const params = new URLSearchParams({
                 Table: 'DASHBOARD_VIEW_DOCUMENTI_PUBBLICI',
                 // Applichiamo la stessa logica di "Esiti" definita sopra
-                FilterHide: "bScaduto=0 and tipo='Esito'", // MODIFICA: Corretto anche qui
+                FilterHide: "bScaduto=0 and tipo='Esito'", 
                 ML_KEY: 'TEMPLATE_RSS_DPCM_ML',
-                sort: 'DtPubblicazione',
+                sort: 'DtScadenzaBandoTecnical',
                 sortorder: 'DESC',
                 Filter: `CIG LIKE '%${encodeURIComponent(cig)}%'` // Filtra per CIG
             });
@@ -1184,7 +1064,12 @@
                 // Modificato: usa filteredItems
                 // AGGIORNAMENTO QUI: Mostra la fonte del proxy se disponibile
                 let statusHtml = `<p id="results-status">Trovati ${filteredItems.length} risultati che corrispondono ai filtri in questa pagina.`;
-                
+                if (window.currentProxySource) {
+                    // Estrae solo il dominio per pulizia
+                    let domain = '';
+                    try { domain = new URL(window.currentProxySource).hostname; } catch(e) { domain = window.currentProxySource; }
+                    statusHtml += ` <span style="font-size: 0.85em; color: #999; display: block; margin-top: 4px;">Fonte proxy: ${domain}</span>`;
+                }
                 statusHtml += `</p>`;
                 resultsStatusContainer.innerHTML = statusHtml;
                 
@@ -1298,11 +1183,11 @@
             // 4. thingproxy: Spesso funziona se gli altri falliscono
             // 5. cors.eu.org: Lento ma spesso aperto
             const proxies = [
-                { url: `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}&_t=${ts}`, type: 'text'},
+                { url: `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`, type: 'text'},
                 { url: `https://corsproxy.io/?${encodeURIComponent(url)}`, type: 'text' },
                 { url: `https://api.allorigins.win/get?url=${encodeURIComponent(url)}&_t=${ts}`, type: 'json' },
-                { url: `https://thingproxy.freeboard.io/fetch/${url}?_t=${ts}`, type: 'text' },
-                { url: `https://cors.eu.org/${url}?_t=${ts}`, type: 'text' }
+                { url: `https://thingproxy.freeboard.io/fetch/${url}`, type: 'text' },
+                { url: `https://cors.eu.org/${url}`, type: 'text' }
             ];
             
             // Mix casulae dei proxy secondari (dal secondo in poi)
@@ -1603,7 +1488,12 @@
                 // Modificato: usa filteredItems
                 // AGGIORNAMENTO QUI: Mostra la fonte del proxy se disponibile
                 let statusHtml = `<p id="results-status">Trovati ${filteredItems.length} risultati che corrispondono ai filtri in questa pagina.`;
-                
+                if (window.currentProxySource) {
+                    // Estrae solo il dominio per pulizia
+                    let domain = '';
+                    try { domain = new URL(window.currentProxySource).hostname; } catch(e) { domain = window.currentProxySource; }
+                    statusHtml += ` <span style="font-size: 0.85em; color: #999; display: block; margin-top: 4px;">Fonte proxy: ${domain}</span>`;
+                }
                 statusHtml += `</p>`;
                 resultsStatusContainer.innerHTML = statusHtml;
                 
@@ -1817,48 +1707,21 @@
         }
 
         // --- EVENT LISTENERS ---
-        searchForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            if (currentView === 'cerca-esito') {
-                fetchEsitoByCig();
-            } else {
-                currentPage = 1;
-                fetchFeed();
-            }
-        });
-        
-        // NUOVO LISTENER PER IL RESET
+        searchForm.addEventListener('submit', (e) => { e.preventDefault(); currentPage = 1; fetchFeed(); });
         resetFiltersBtn.addEventListener('click', () => {
-             // Resetta campi di testo
             document.getElementById('cig-input').value = '';
             document.getElementById('oggetto-input').value = '';
-            
-            // Resetta menu a tendina
             enteProponenteSelect.value = '';
             enteAppaltanteSelect.value = '';
-            
-            // Resetta campi range
             document.getElementById('importo-da-input').value = '';
             document.getElementById('importo-a-input').value = '';
             document.getElementById('data-da-input').value = '';
             document.getElementById('data-a-input').value = '';
-
-            // Resetta pillole Categoria
-            contractPills.forEach(p => p.classList.remove('active'));
-            selectedContractType = '';
-
-            // Resetta pillole Merceologiche
-            merceologicaPills.forEach(p => p.classList.remove('active'));
-            selectedMerceologica = '';
-            
-            // Resetta paginazione e risultati
-            numResultsInput.value = '10'; // Resetta al default
+            contractPills.forEach(p => p.classList.remove('active')); selectedContractType = '';
+            merceologicaPills.forEach(p => p.classList.remove('active')); selectedMerceologica = '';
+            numResultsInput.value = '10';
             currentPage = 1;
-            
-            // Ricarica i dati solo se non siamo nel tab esito
-            if (currentView !== 'cerca-esito') {
-                fetchFeed(); // Questo chiamerà disableFilters()
-            }
+            fetchFeed();
         });
 
         prevPageBtn.addEventListener('click', () => { if (currentPage > 1) { currentPage--; fetchFeed(); } });
