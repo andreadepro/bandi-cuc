@@ -214,30 +214,23 @@
             margin-top: 20px;
             padding-top: 15px;
             border-top: 1px dashed #dee2e6;
-            flex-wrap: wrap;
-            gap: 15px;
         }
-        .advanced-footer-left {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-            flex-wrap: wrap;
-        }
-        
         #reset-filters-btn {
-            background: none;
-            border: none;
+            background-color: #fff;
+            border: 1px solid var(--danger-color);
             color: var(--danger-color);
-            text-decoration: underline;
+            text-decoration: none;
             cursor: pointer;
-            font-size: 0.9rem;
-            padding: 5px 0;
+            font-size: 0.95rem;
+            font-weight: 600;
+            padding: 10px 20px;
+            border-radius: 6px;
+            transition: all 0.2s;
+            height: 46px;
         }
-        #reset-filters-btn:hover { color: #bd2130; }
-
-        /* Pulsante Applica nel footer avanzato */
-        .btn-apply-bottom {
-            min-width: 150px;
+        #reset-filters-btn:hover { 
+            background-color: var(--danger-color); 
+            color: white;
         }
 
         .form-group { display: flex; flex-direction: column; }
@@ -551,7 +544,7 @@
             <div id="map-container"></div>
         </div>
 
-        <!-- Contenitore per i risultati della ricerca Esiti (usiamo feedContainer con stile specifico) -->
+        <!-- Contenitore per i risultati della ricerca Esiti -->
         <div id="esito-container"></div>
 
         <div id="feed-container">
@@ -601,10 +594,11 @@
         let currentPage = 1;
         let fetchedItems = [];
         let currentView = 'sintetico';
+        // Variabili separate per i filtri
         let selectedContractType = '';
         let selectedMerceologica = '';
-        let map = null; 
-        let markersLayer = null; 
+        let map = null; // Riferimento alla mappa Leaflet
+        let markersLayer = null; // Layer per i cluster di pin sulla mappa
 
         // --- TOGGLE FILTRI AVANZATI ---
         advancedToggleBar.addEventListener('click', () => {
@@ -665,6 +659,7 @@
         };
 
         // --- SINONIMI PER CATEGORIE ---
+        // Dizionario aggiornato in base al file CSV
         const categorySynonyms = {
             'ict': ['software', 'hardware', 'digitale', 'pc', 'computer', 'server', 'rete', 'web', 'sito', 'app', 'cloud', 'ict', 'telefonia', 'dati', 'digitalizzazione', 'connettività'],
             'generali': ['cancelleria', 'arredi', 'pulizia', 'logistica', 'archivio', 'postali', 'copisteria', 'materiali consumo', 'beni', 'amministrativi', 'ufficio'],
@@ -1091,16 +1086,9 @@
         async function fetchProxy(url) {
             const ts = Date.now();
             const TIMEOUT_MS = 30000; 
-            
-            // Lista di proxy ORDINATA per affidabilità:
-            // 1. corsproxy.io: Di solito il più veloce per raw XML
-            // 2. allorigins.win: Molto affidabile, ma richiede parsing JSON
-            // 3. codetabs: Buona alternativa
-            // 4. thingproxy: Spesso funziona se gli altri falliscono
-            // 5. cors.eu.org: Lento ma spesso aperto
             const proxies = [
-                { url: `https://corsproxy.io/?${encodeURIComponent(url)}`, type: 'text' },
                 { url: `https://api.allorigins.win/get?url=${encodeURIComponent(url)}&_t=${ts}`, type: 'json' },
+                { url: `https://corsproxy.io/?${encodeURIComponent(url)}`, type: 'text' },
                 { url: `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`, type: 'text'},
                 { url: `https://thingproxy.freeboard.io/fetch/${url}`, type: 'text' },
                 { url: `https://cors.eu.org/${url}`, type: 'text' }
@@ -1152,333 +1140,6 @@
                 } catch (e) { console.warn(`Proxy fallito: ${proxy.url}`, e); }
             }
             throw new Error("Tutti i proxy falliti");
-        }
-
-
-        // --- COSTRUZIONE URL (Bandi) ---
-        function buildUrl() {
-            const baseUrl = "https://place-vda.aflink.it/portale/rss_new.asp";
-            const numResults = numResultsInput.value;
-            const cig = document.getElementById('cig-input').value.trim();
-            let oggetto = document.getElementById('oggetto-input').value.trim();
-            // Legge dai nuovi menu a tendina
-            const enteProponente = enteProponenteSelect.value;
-            const enteAppaltante = enteAppaltanteSelect.value;
-            // --- INIZIO NUOVE AGGIUNTE ---
-            const importoDa = document.getElementById('importo-da-input').value;
-            const importoA = document.getElementById('importo-a-input').value;
-            const dataDa = document.getElementById('data-da-input').value;
-            const dataA = document.getElementById('data-a-input').value;
-            // --- FINE NUOVE AGGIUNTE ---
-
-            const params = new URLSearchParams({
-                Table: 'DASHBOARD_VIEW_DOCUMENTI_PUBBLICI',
-                FilterHide: "bScaduto=0 and tipo<>'Esito'", 
-                ML_KEY: 'TEMPLATE_RSS_DPCM_ML',
-                sort: 'DtScadenzaBandoTecnical',
-                sortorder: 'asc',
-                numRowForPag: numResults,
-                nPag: currentPage
-            });
-
-            const filters = [];
-            // --- REVISIONE DI TUTTI I FILTRI (rimozione namespace 'afs:') ---
-            if (cig) filters.push(`CIG LIKE '%${encodeURIComponent(cig)}%'`);
-            if (oggetto) filters.push(`Oggetto LIKE '%${encodeURIComponent(oggetto)}%'`); 
-            
-            // --- MODIFICA LOGICA FILTRI CATEGORIA ---
-            // Filtro per Categoria (Contratto)
-            // CORREZIONE: Usare le variabili corrette selectedContractType e selectedMerceologica
-            if (selectedContractType) {
-                 filters.push(`Contratto LIKE '%${encodeURIComponent(selectedContractType)}%'`);
-            }
-            // Filtro per Categoria Merceologica (Oggetto)
-            if (selectedMerceologica) {
-                const catLower = selectedMerceologica.toLowerCase();
-                const synonyms = categorySynonyms[catLower] || [catLower];
-                const orQuery = synonyms.map(word => `Oggetto LIKE '%${encodeURIComponent(word)}%'`).join(' OR ');
-                filters.push(`(${orQuery})`);
-            }
-            // --- FINE MODIFICA ---
-            
-            // --- MODIFICA FILTRI ENTE ---
-            // Riportati a LIKE e rimosso namespace
-            if (enteProponente) {
-                filters.push(`EnteProponente LIKE '%${enteProponente.replace(/'/g, "''")}%'`);
-            }
-            if (enteAppaltante) {
-                filters.push(`DenominazioneEnte LIKE '%${enteAppaltante.replace(/'/g, "''")}%'`);
-            }
-            // --- FINE MODIFICA ---
-            
-            // --- INIZIO NUOVE AGGIUNTE FILTRI RANGE ---
-            // RIMOSSI i filtri importo da qui. Saranno gestiti lato client.
-            
-            // Rimosso namespace e CORRETTO
-            if (dataDa) filters.push(`DtScadenzaBandoTecnical >= '${dataDa}T00:00:00'`);
-            if (dataA) filters.push(`DtScadenzaBandoTecnical <= '${dataA}T23:59:59'`);
-            // --- FINE MODIFICA ---
-
-            if (filters.length > 0) params.set('Filter', filters.join(' AND '));
-            return `${baseUrl}?${params.toString()}`;
-        }
-        
-        // --- COSTRUZIONE URL (Esiti per CIG) ---
-        function buildEsitoUrl(cig) {
-             const baseUrl = "https://place-vda.aflink.it/portale/rss_new.asp";
-             const params = new URLSearchParams({
-                Table: 'DASHBOARD_VIEW_DOCUMENTI_PUBBLICI',
-                FilterHide: "bScaduto=0 and tipo='Esito'", // CERCA SOLO ESITI
-                ML_KEY: 'TEMPLATE_RSS_DPCM_ML',
-                sort: 'DtPubblicazione',
-                sortorder: 'DESC',
-                Filter: `CIG LIKE '%${encodeURIComponent(cig)}%'` // Filtra per CIG
-            });
-            return `${baseUrl}?${params.toString()}`;
-        }
-
-        function formatDate(dateString) {
-            if (!dateString || dateString === 'N/D') return 'N/D';
-            try {
-                const date = new Date(dateString);
-                if (isNaN(date.getTime())) return dateString;
-                const day = String(date.getDate()).padStart(2, '0');
-                const month = String(date.getMonth() + 1).padStart(2, '0');
-                const year = date.getFullYear();
-                const hours = String(date.getHours()).padStart(2, '0');
-                const minutes = String(date.getMinutes()).padStart(2, '0');
-                return `${day}/${month}/${year} ore ${hours}:${minutes}`;
-            } catch (e) { return dateString; }
-        }
-
-        function formatOggetto(text) {
-            if (!text) return 'Descrizione non disponibile';
-            return text.replace(/\s*(Scadenza:)/gi, '<br><strong style="color:#dc3545;">$1</strong>');
-        }
-
-        // --- NUOVA FUNZIONE HELPER PER PARSARE GLI IMPORTI ---
-        function parseImporto(importoStr) {
-            if (!importoStr || importoStr === 'N/D') return null;
-            try {
-                // Rimuove i punti (migliaia), sostituisce la virgola (decimali) con un punto, poi converte in numero
-                return parseFloat(importoStr.replace(/\./g, '').replace(',', '.'));
-            } catch (e) {
-                console.warn(`Impossibile parsare l'importo: ${importoStr}`, e);
-                return null;
-            }
-        }
-
-        // --- FUNZIONE PER INIZIALIZZARE E AGGIORNARE LA MAPPA ---
-        function updateMap() {
-            if (!map) {
-                // Inizializza la mappa se non esiste ancora
-                map = L.map('map-container').setView([45.737, 7.320], 10); // Centra su Aosta
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    maxZoom: 18,
-                    attribution: '© OpenStreetMap'
-                }).addTo(map);
-                // Usa un MarkerClusterGroup invece di un LayerGroup standard
-                markersLayer = L.markerClusterGroup({
-                    showCoverageOnHover: false, // Disattiva l'area blu al passaggio del mouse sui cluster
-                    maxClusterRadius: 50 // Raggio di raggruppamento (più basso = meno raggruppamento)
-                }).addTo(map);
-            }
-
-            markersLayer.clearLayers(); // Pulisci i vecchi marker
-
-            fetchedItems.forEach(item => {
-                const data = extractData(item);
-                // Usa il dato grezzo per la mappa
-                const enteNormalized = data.ente_raw ? data.ente_raw.toLowerCase()
-                    .replace('communauté de montagne', 'unite des communes valdotaines')
-                    .replace("unite' des communes valdotaines", 'unite des communes valdotaines') : "";
-                
-                let coords = null;
-                // Cerca corrispondenza esatta o parziale nel dizionario
-                for (const key in comuniVdA) {
-                    if (enteNormalized.includes(key)) {
-                        coords = comuniVdA[key];
-                        if (enteNormalized === key) break;
-                    }
-                }
-
-                if (coords) {
-                     // --- CORREZIONE LINK E DATI POPUP ---
-                    let linkRaw = item.querySelector("link")?.textContent?.trim() || '#';
-                    linkRaw = linkRaw.replace(/\/\/*portale\//g, '/portalegare/');
-                    const txt = document.createElement("textarea");
-                    txt.innerHTML = linkRaw;
-                    linkRaw = txt.value;
-
-                    const title = item.querySelector("title")?.textContent || 'Bando';
-                    let shortOggetto = data.oggetto.length > 100 ? data.oggetto.substring(0, 100) + '...' : data.oggetto;
-
-                    const popupContent = `
-                        <div style="max-width: 250px;">
-                            <b>${title}</b><br>
-                            <small style="color: #666;">${data.enteProponente}</small><br>
-                            <p style="margin: 8px 0;">${shortOggetto}</p>
-                            <span style="color: #dc3545; font-size: 0.9em;">Scadenza: ${formatDate(data.scadenza)}</span><br>
-                            <a href="${linkRaw}" target="_blank">Vedi dettagli gara &rarr;</a>
-                        </div>
-                    `;
-                    
-                    // Aggiungi il marker al Cluster Group invece che direttamente alla mappa
-                    markersLayer.addLayer(L.marker(coords).bindPopup(popupContent));
-                }
-            });
-        }
-        
-        // --- FUNZIONE DI VISUALIZZAZIONE PRINCIPALE ---
-        function displayItems() {
-            // Gestione visibilità dei container in base alla view corrente
-            if (currentView === 'mappa') {
-                feedContainer.style.display = 'none';
-                esitoContainer.style.display = 'none';
-                mapWrapper.style.display = 'block';
-                mapContainer.classList.add('active');
-                // Timeout necessario per far renderizzare correttamente la mappa quando diventa visibile
-                setTimeout(() => { 
-                    if (map) map.invalidateSize(); 
-                }, 300); 
-            } else if (currentView === 'cerca-esito') {
-                feedContainer.style.display = 'none';
-                mapWrapper.style.display = 'none';
-                esitoContainer.style.display = 'block';
-            } else { // Viste 'sintetico' o 'completo'
-                feedContainer.style.display = 'block';
-                mapWrapper.style.display = 'none';
-                esitoContainer.style.display = 'none';
-            }
-
-            // Popola solo se la vista non è mappa e non è cerca-esito
-            if (currentView === 'sintetico' || currentView === 'completo') {
-                 feedContainer.innerHTML = '';
-
-                 // --- NUOVA LOGICA DI FILTRO LATO CLIENT PER IMPORTO ---
-                const importoDa = parseFloat(document.getElementById('importo-da-input').value) || 0;
-                const importoA = parseFloat(document.getElementById('importo-a-input').value) || Infinity;
-                
-                const filteredItems = fetchedItems.filter(item => {
-                    const data = extractData(item);
-                    const importoBando = parseImporto(data.baseAsta);
-
-                    // Se l'importo non è parsabile (es. 'N/D'), lo escludiamo dal filtro range
-                    if (importoBando === null) {
-                        // Se l'utente non ha messo filtri (0 e Infinity), mostriamo anche N/D
-                        return importoDa === 0 && importoA === Infinity;
-                    }
-                    
-                    return (importoBando >= importoDa) && (importoBando <= importoA);
-                });
-                // --- FINE LOGICA FILTRO ---
-
-
-                 if (!filteredItems || filteredItems.length === 0) { // Modificato: usa filteredItems
-                    feedContainer.innerHTML = "<p style='text-align:center; padding: 20px;'>Nessun elemento trovato per i criteri specificati.</p>";
-                    nextPageBtn.disabled = true;
-                    // Aggiorniamo comunque il contatore (anche se è 0)
-                    resultsStatusContainer.innerHTML = `<p id="results-status">Trovati 0 risultati che corrispondono ai filtri in questa pagina.</p>`;
-                    return;
-                }
-                // Modificato: usa filteredItems
-                resultsStatusContainer.innerHTML = `<p id="results-status">Trovati ${filteredItems.length} risultati che corrispondono ai filtri in questa pagina.</p>`;
-                try {
-                    // Modificato: itera su filteredItems invece di fetchedItems
-                    filteredItems.forEach(item => {
-                        const title = item.querySelector("title")?.textContent || 'N/D';
-                        let linkRaw = item.querySelector("link")?.textContent?.trim() || '#';
-                        linkRaw = linkRaw.replace(/\/\/*portale\//g, '/portalegare/');
-                        const txt = document.createElement("textarea");
-                        txt.innerHTML = linkRaw;
-                        linkRaw = txt.value;
-                        
-                        const cardDiv = document.createElement('div');
-                        cardDiv.className = `feed-item ${currentView === 'sintetico' ? 'synthetic-card' : 'full-card'}`;
-
-                        if (currentView === 'sintetico') {
-                            const data = extractData(item);
-                            cardDiv.innerHTML = `
-                                <div class="synthetic-header">
-                                    <h3 class="synthetic-title">${title}</h3>
-                                    <div class="synthetic-badges">
-                                        ${data.esito ? `<span class="badge badge-esito">${data.esito}</span>` : ''}
-                                        ${data.cig ? `<a href="https://dati.anticorruzione.it/superset/dashboard/dettaglio_cig/?cig=${data.cig}" target="_blank" class="badge badge-cig" title="Vedi su ANAC">CIG: ${data.cig}</a>` : ''}
-                                    </div>
-                                </div>
-                                <div class="synthetic-body">
-                                    <!-- MODIFICA: Mostra entrambi gli enti -->
-                                    <div class="info-group" style="grid-column: 1 / -1;">
-                                        <span class="info-label">Ente Proponente</span>
-                                        <span class="info-value ente">${data.enteProponente}</span>
-                                    </div>
-                                    <div class="info-group" style="grid-column: 1 / -1;">
-                                        <span class="info-label">Ente Appaltante</span>
-                                        <span class="info-value ente">${data.enteAppaltante}</span>
-                                    </div>
-                                    <div class="info-group" style="grid-column: 1 / -1;">
-                                        <span class="info-label">Oggetto del Bando</span>
-                                        <span class="info-value oggetto">${formatOggetto(data.oggetto)}</span>
-                                    </div>
-                                    <div class="info-group">
-                                        <span class="info-label">Base d'Asta</span>
-                                        <span class="info-value importo">${data.baseAsta}</span>
-                                    </div>
-                                    <div class="info-group">
-                                        <span class="info-label">Scadenza Bando</span>
-                                        <span class="info-value scadenza">${formatDate(data.scadenza)}</span>
-                                    </div>
-                                     <div class="info-group">
-                                        <span class="info-label">Tipologia</span>
-                                        <span class="info-value">${data.contratto}</span>
-                                    </div>
-                                </div>
-                                <div class="synthetic-footer">
-                                    <a href="${linkRaw}" target="_blank" rel="noopener noreferrer" class="btn-details">Vedi Dettagli Gara &rarr;</a>
-                                </div>
-                            `;
-                        } else {
-                            let dlContent = '';
-                            for (const node of item.children) {
-                                if (node.tagName !== 'title' && node.tagName !== 'link') dlContent += `<dt>${node.tagName}</dt><dd>${node.textContent}</dd>`;
-                            }
-                            cardDiv.innerHTML = `<h2><a href="${linkRaw}" target="_blank">${title}</a></h2><dl>${dlContent}</dl>`;
-                        }
-                        feedContainer.appendChild(cardDiv);
-                    });
-                } catch (error) { console.error("Errore visualizzazione:", error); }
-            }
-        }
-
-        function extractData(itemXml) {
-            const getSafe = (tagCandidates) => {
-                if (!Array.isArray(tagCandidates)) tagCandidates = [tagCandidates];
-                for (const tag of tagCandidates) {
-                    const node = Array.from(itemXml.children).find(n => 
-                        n.tagName === tag || n.tagName.toLowerCase() === tag.toLowerCase() || 
-                        n.nodeName === tag || n.nodeName.toLowerCase() === tag.toLowerCase()
-                    );
-                    if (node && node.textContent) return node.textContent.trim();
-                }
-                return null;
-            };
-            
-            // Estrae entrambi i campi
-            const enteProponente = getSafe(['afs:EnteProponente', 'ente', 'amministrazione']);
-            const enteAppaltante = getSafe(['afs:DenominazioneEnte', 'denominazioneente']);
-
-            return {
-                esito: getSafe(['esito', 'stato']),
-                cig: getSafe(['afs:CIG', 'CIG', 'cig']),
-                enteProponente: enteProponente || 'N/D',
-                enteAppaltante: enteAppaltante || 'N/D', 
-                ente_raw: enteProponente, // Per la logica della mappa
-                oggetto: getSafe(['afs:Oggetto', 'description', 'oggetto', 'titolo']),
-                baseAsta: getSafe(['afs:a_base_asta', 'importo', 'basedasta']) || 'N/D',
-                contratto: getSafe(['afs:Contratto', 'tipologia', 'contratto']) || 'N/D',
-                scadenza: getSafe(['afs:DtScadenzaBandoTecnical', 'afs:dtscadenza', 'dtscadenza', 'scadenza']) || 'N/D',
-                pubblicazione: getSafe(['dtpubblicazione', 'afs:DtPubblicazione', 'pubDate']) || 'N/D'
-            };
         }
 
         // --- FUNZIONE CARICAMENTO BANDI (per tab 1, 2, 3) ---
@@ -1625,6 +1286,20 @@
         prevPageBtn.addEventListener('click', () => { if (currentPage > 1) { currentPage--; fetchFeed(); } });
         nextPageBtn.addEventListener('click', () => { currentPage++; fetchFeed(); });
         
+        // Tab listeners
+        function attachTabListeners() {
+             const tabs = document.querySelectorAll('.tab-link');
+             tabs.forEach(btn => btn.addEventListener('click', () => {
+                tabs.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentView = btn.dataset.view;
+                if (currentView === 'mappa') {
+                    setTimeout(() => { if (map) map.invalidateSize(); updateMap(); }, 300);
+                }
+                displayItems();
+            }));
+        }
+
         contractPills.forEach(pill => pill.addEventListener('click', () => {
             if (pill.classList.contains('active')) { pill.classList.remove('active'); selectedContractType = ''; }
             else { contractPills.forEach(p => p.classList.remove('active')); pill.classList.add('active'); selectedContractType = pill.dataset.cat; }
