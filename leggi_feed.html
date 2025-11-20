@@ -43,7 +43,27 @@
             background-color: #fff;
             border-radius: 12px;
             box-shadow: 0 2px 20px rgba(0,0,0,0.08);
+            border: 1px solid #eee;
         }
+        
+        /* --- STILI PER HEADER E FOOTER IMMAGINI --- */
+        .header-img {
+            width: calc(100% + 50px);
+            height: auto;
+            display: block;
+            margin: -25px -25px 20px -25px;
+            border-radius: 12px 12px 0 0;
+            max-width: none;
+        }
+        .footer-img {
+            width: calc(100% + 50px);
+            height: auto;
+            display: block;
+            margin: 30px -25px -25px -25px;
+            border-radius: 0 0 12px 12px;
+            max-width: none;
+        }
+
         h1 {
             text-align: center;
             color: var(--primary-color);
@@ -439,12 +459,15 @@
 <body>
 
     <div class="container">
-        <h1>INVA - Bandi PlaCe-VdA</h1>
+        <!-- HEADER IMAGE (da scommentare se usate) -->
+        <!-- <img src="PLACE_header_def.jpg" alt="Intestazione" class="header-img"> -->
+
+        <h1>INVA - Bandi e Avvisi PlaCe-VdA</h1>
 
         <!-- SELETTORE MODALITÀ -->
         <div class="mode-switcher">
-            <button id="btn-mode-bandi" class="mode-btn active">Bandi Attivi</button>
-            <button id="btn-mode-esiti" class="mode-btn">Esiti</button>
+            <button id="btn-mode-attivi" class="mode-btn active">Attivi</button>
+            <button id="btn-mode-scaduti" class="mode-btn">Scaduti</button>
         </div>
 
         <form id="search-form">
@@ -541,7 +564,7 @@
                              <button type="button" id="reset-filters-btn">Azzera tutti i filtri</button>
                              <div class="form-group" id="num-results-group" style="width: 120px; margin-bottom: 0;">
                                 <label for="num-results-input" style="margin-bottom: 2px;">Risultati/pag.</label>
-                                <input type="number" id="num-results-input" value="10" min="1" max="1000">
+                                <input type="number" id="num-results-input" value="200" min="1" max="1000"> <!-- MODIFICA: Default 200 -->
                             </div>
                         </div>
                         <!-- Pulsante Applica duplicato per comodità -->
@@ -585,13 +608,15 @@
 
         <!-- Footer Debug -->
         <div id="debug-footer"></div>
+
+        <!-- FOOTER IMAGE (da scommentare se usate) -->
+        <!-- <img src="CUC_footer_def.jpg" alt="Piè di pagina" class="footer-img"> -->
     </div>
 
     <script>
         // --- ELEMENTI DEL DOM ---
         const searchForm = document.getElementById('search-form');
         const filtersFieldset = document.getElementById('filters-fieldset');
-        // Modifica: Seleziona il nuovo toggle bar
         const advancedToggleBar = document.getElementById('advanced-toggle-bar');
         const advancedFiltersDiv = document.getElementById('advanced-filters');
         const feedContainer = document.getElementById('feed-container');
@@ -610,14 +635,15 @@
         const enteProponenteSelect = document.getElementById('ente-proponente-select');
         const enteAppaltanteSelect = document.getElementById('ente-appaltante-select');
         const resetFiltersBtn = document.getElementById('reset-filters-btn');
-        const btnModeBandi = document.getElementById('btn-mode-bandi');
-        const btnModeEsiti = document.getElementById('btn-mode-esiti');
+        // NUOVI NOMI PULSANTI MODALITA'
+        const btnModeAttivi = document.getElementById('btn-mode-attivi'); 
+        const btnModeScaduti = document.getElementById('btn-mode-scaduti');
         const tabsContainer = document.getElementById('tabs-container');
         const labelDataDa = document.getElementById('label-data-da');
         const labelDataA = document.getElementById('label-data-a');
 
         // --- STATO DELL'APPLICAZIONE ---
-        let currentMode = 'bandi';
+        let currentMode = 'attivi'; // 'attivi' o 'scaduti'
         let currentPage = 1;
         let fetchedItems = [];
         let currentView = 'sintetico';
@@ -634,29 +660,175 @@
         });
 
         // --- DB ENTI (Simulato - Primi 20) ---
-        const entiList = [
-            "\"\"\"CENTRO DI STUDI STORICO-LETTERARI NATALINO SAPEGNO\"\" ONLUS\"",
-            "AGENZIA REGIONALE DEI SEGRETARI DEGLI ENTI LOCALI DELLA VALLE D’AOSTA",
-            "ANPAS Comitato Regionale Valle d’Aosta Federazione Regionale del Soccorso VDA-ODV",
-            "AREA VDA - AGENZIA REGIONALE PER LE EROGAZIONE IN AGRICOLTURA DELLA REGIONE AUTONOMA VALLE D'AOSTA",
-            "ARER VALLE D'AOSTA",
-            "ARPA VALLE D'AOSTA",
-            "ASSOCIATION REGIONALE ELEVEURS VALDOTAINS (A.R.E.V.)",
-            "ASSOCIAZIONE FORTE DI BARD",
-            "ASSOCIAZIONE VALDOSTANA MAESTRI DI SCI - AVMS",
-            "AVDA SPA",
-            "AZIENDA PUBBLICI SERVIZI AOSTA SOCIETA PER AZIONI",
-            "AZIENDA USL VALLE D'AOSTA",
-            "C.M.F. SAINT-PIERRE VILLENEUVE",
-            "CAMERA VALDOSTANA DELLE IMPRESE E DELLE PROFESSIONI",
-            "CASA DI RIPOSO J. B. FESTAZ",
-            "CENTRO SERVIZI COURMAYEUR SRL",
-            "CERVIM",
-            "CHAMOIS SERVIZI SRL",
-            "COLLEGIO GEOMETRI E GEOMETRI LAUREATI DELLA VALLE D’AOSTA",
-            "COMUNE DI ALLEIN"
-            // Lista completa omessa per stabilità
-        ];
+       const entiList = [
+    "\"\"\"CENTRO DI STUDI STORICO-LETTERARI NATALINO SAPEGNO\"\" ONLUS\"",
+    "AGENZIA REGIONALE DEI SEGRETARI DEGLI ENTI LOCALI DELLA VALLE D’AOSTA",
+    "ANPAS Comitato Regionale Valle d’Aosta Federazione Regionale del Soccorso VDA-ODV",
+    "AREA VDA - AGENZIA REGIONALE PER LE EROGAZIONE IN AGRICOLTURA DELLA REGIONE AUTONOMA VALLE D'AOSTA",
+    "ARER VALLE D'AOSTA",
+    "ARPA VALLE D'AOSTA",
+    "ASSOCIATION REGIONALE ELEVEURS VALDOTAINS (A.R.E.V.)",
+    "ASSOCIAZIONE FORTE DI BARD",
+    "ASSOCIAZIONE VALDOSTANA MAESTRI DI SCI - AVMS",
+    "AVDA SPA",
+    "AZIENDA PUBBLICI SERVIZI AOSTA SOCIETA PER AZIONI",
+    "AZIENDA USL VALLE D'AOSTA",
+    "C.M.F. SAINT-PIERRE VILLENEUVE",
+    "CAMERA VALDOSTANA DELLE IMPRESE E DELLE PROFESSIONI",
+    "CASA DI RIPOSO J. B. FESTAZ",
+    "CENTRO SERVIZI COURMAYEUR SRL",
+    "CERVIM",
+    "CHAMOIS SERVIZI SRL",
+    "COLLEGIO GEOMETRI E GEOMETRI LAUREATI DELLA VALLE D’AOSTA",
+    "COMUNE DI ALLEIN",
+    "COMUNE DI ANTEY SAINT ANDRE",
+    "COMUNE DI AOSTA",
+    "COMUNE DI ARNAD",
+    "COMUNE DI ARVIER",
+    "COMUNE DI AVISE",
+    "COMUNE DI AYAS",
+    "COMUNE DI AYMAVILLES",
+    "COMUNE DI BARD",
+    "COMUNE DI BIONAZ",
+    "COMUNE DI BRISSOGNE",
+    "COMUNE DI BRUSSON",
+    "COMUNE DI CHALLAND SAINT ANSELME",
+    "COMUNE DI CHALLAND SAINT VICTOR",
+    "COMUNE DI CHAMBAVE",
+    "COMUNE DI CHAMOIS",
+    "COMUNE DI CHAMPDEPRAZ",
+    "COMUNE DI CHAMPORCHER",
+    "COMUNE DI CHARVENSOD",
+    "COMUNE DI CHATILLON",
+    "COMUNE DI COGNE",
+    "COMUNE DI COURMAYEUR",
+    "COMUNE DI DONNAS",
+    "COMUNE DI DOUES",
+    "COMUNE DI EMARESE",
+    "COMUNE DI ETROUBLES",
+    "COMUNE DI FÉNIS",
+    "COMUNE DI FONTAINEMORE",
+    "COMUNE DI GABY",
+    "COMUNE DI GIGNOD",
+    "COMUNE DI GRESSAN",
+    "COMUNE DI GRESSONEY-LA-TRINITÉ",
+    "COMUNE DI GRESSONEY-SAINT-JEAN",
+    "COMUNE DI HONE",
+    "COMUNE DI INTROD",
+    "COMUNE DI ISSIME",
+    "COMUNE DI ISSOGNE",
+    "COMUNE DI JOVENCAN",
+    "COMUNE DI LA MAGDELEINE",
+    "COMUNE DI LA SALLE",
+    "COMUNE DI LILLIANES",
+    "COMUNE DI MONTJOVET",
+    "COMUNE DI MORGEX",
+    "COMUNE DI NUS",
+    "COMUNE DI OLLOMONT",
+    "COMUNE DI OYACE",
+    "COMUNE DI PERLOZ",
+    "COMUNE DI POLLEIN",
+    "COMUNE DI PONTBOSET",
+    "COMUNE DI PONTEY",
+    "COMUNE DI PONT-SAINT-MARTIN",
+    "COMUNE DI PRE'-SAINT-DIDIER",
+    "COMUNE DI QUART",
+    "COMUNE DI RHEMES-NOTRE-DAME",
+    "COMUNE DI RHEMES-SAINT-GEORGES",
+    "COMUNE DI ROISAN",
+    "COMUNE DI SAINT DENIS",
+    "COMUNE DI SAINT-CHRISTOPHE",
+    "COMUNE DI SAINT-MARCEL",
+    "COMUNE DI SAINT-NICOLAS",
+    "COMUNE DI SAINT-OYEN",
+    "COMUNE DI SAINT-PIERRE",
+    "COMUNE DI SAINT-RHÉMY-EN-BOSSES",
+    "COMUNE DI SAINT-VINCENT",
+    "COMUNE DI SARRE",
+    "COMUNE DI TORGNON",
+    "COMUNE DI VALGRISENCHE",
+    "COMUNE DI VALPELLINE",
+    "COMUNE DI VALSAVARENCHE",
+    "COMUNE DI VALTOURNENCHE",
+    "COMUNE DI VERRAYES",
+    "COMUNE DI VERRES",
+    "COMUNE DI VILLENEUVE",
+    "COMUNE LA THUILE",
+    "CONSIGLIO REGIONALE DELLA VALLE D'AOSTA",
+    "CONSORZIO DEGLI ENTI LOCALI DELLA VALLE D'AOSTA (CELVA)",
+    "CONSORZIO DEI COMUNI DELLA VALLE D'AOSTA – B.I.M. DORA BALTEA",
+    "CONSORZIO REGIONALE PER LA TUTELA, L’INCREMENTO E L’ESERCIZIO DELLA PESCA IN VALLE D’AOSTA",
+    "CONVITTO REGIONALE FEDERICO CHABOD",
+    "CRIA (CENTRO REGIONALE ISTRUZIONE PER ADULTI)",
+    "Ente Parco Nazionale Gran Paradiso",
+    "ENVERS SRL",
+    "FINAOSTA S.P.A.",
+    "FONDAZIONE CENTRO INTERNAZIONALE SU DIRITTO SOCIETA' E ECONOMIA",
+    "FONDAZIONE CLÉMENT FILLIETROZ-ONLUS",
+    "FONDAZIONE DELLA REGIONE AUTONOMA VALLE D’AOSTA PER LA RICERCA SUL CANCRO",
+    "FONDAZIONE GRAN PARADISO – GRAND PARADIS",
+    "FONDAZIONE LICEO LINGUISTICO COURMAYEUR",
+    "FONDAZIONE MARIA IDA VIGLINO PER LA CULTURA MUSICALE",
+    "FONDAZIONE MONTAGNA SICURA",
+    "FONDAZIONE PER LA FORMAZIONE PROFESSIONALE TURISTICA",
+    "FONDAZIONE SISTEMA OLLIGNAN",
+    "FONDAZIONE TROFEO MEZZALAMA",
+    "GRESSONEY SPORT HAUS S.R.L. A SOCIO UNICO",
+    "GRUPPO DI AZIONE LOCALE VALLE D’AOSTA",
+    "IN.VA. S.P.A.",
+    "INSTITUT AGRICOLE REGIONAL",
+    "INSTITUT VALDOTAINE DE L'ARTISAT DE TRADITION",
+    "ISILTP ISTITUZIONE SCOLASTICA DI ISTRUZIONE LICEALE TECNICA PROFESSIONALE",
+    "ISTITUTO MUSICALE PAREGGIATO DELLA VALLE D'AOSTA",
+    "ISTITUTO PER IL SISTEMA PREVIDENZIALE DEI CONSIGLIERI REGIONALI",
+    "ISTITUTO REGIONALE A. GERVASONE",
+    "\"ISTITUTO TECNICO PROFESSIONALE REGIONALE \"\"CORRADO GEX\"\"\"",
+    "ISTITUZIONE SCOLASTICA “MONT EMILIUS 3”",
+    "ISTITUZIONE SCOLASTICA ABBÉ J.M.TRÈVES",
+    "ISTITUZIONE SCOLASTICA ABBÉ PROSPER DUC",
+    "\"ISTITUZIONE SCOLASTICA DI ISTRUZIONE TECNICA E PROFESSIONALE \"\"INNOCENT MANZETTI\"\"\"",
+    "ISTITUZIONE SCOLASTICA ELIO REINOTTI",
+    "ISTITUZIONE SCOLASTICA EMILE LEXERT",
+    "ISTITUZIONE SCOLASTICA EUGENIA MARTINET",
+    "ISTITUZIONE SCOLASTICA JEAN- BAPTISTE CERLOGNE",
+    "ISTITUZIONE SCOLASTICA LUIGI BARONE",
+    "ISTITUZIONE SCOLASTICA LUIGI EINAUDI",
+    "ISTITUZIONE SCOLASTICA MARIA IDA VIGLINO",
+    "ISTITUZIONE SCOLASTICA MONT EMILIUS 2",
+    "ISTITUZIONE SCOLASTICA OTTAVIO JACQUEMET",
+    "ISTITUZIONE SCOLASTICA SAINT ROCH",
+    "ISTITUZIONE SCOLASTICA SAN FRANCESCO",
+    "ISTITUZIONE SCOLASTICA UNITÉ DES COMMUNES VALDÔTAINES GRAND COMBIN - GIGNOD",
+    "ISTITUZIONE SCOLASTICA UNITÉ DES COMMUNES VALDÔTAINES MONT ROSE A",
+    "ISTITUZIONE SCOLASTICA UNITÉ DES COMMUNES VALDÔTAINES MONT-EMILIUS 1",
+    "ISTITUZIONE SCOLASTICA VALDIGNE MONT-BLANC",
+    "LICEO CLASSICO, ARTISTICO E MUSICALE",
+    "LICEO DELLE SCIENZE UMANE E SCIENTIFICO REGINA MARIA ADELAIDE",
+    "\"LICEO SCIENTIFICO E LINGUISTICO \"\"E. BÉRARD\"\"\"",
+    "ORDINE DEGLI ARCHITETTI, PIANIFICATORI, PAESAGGISTI E CONSERVATORI DELLA REGIONE AUTONOMA VALLE D'AOSTA",
+    "PARCO NATURALE MONT AVIC",
+    "REGIONE AUTONOMA VALLE D'AOSTA",
+    "SERVICES DES EAUX VALDÔTAINES S.R.L.*BETA*",
+    "SITRASB S.P.A.",
+    "SOCIETÀ DI SERVIZI VALLE D'AOSTA S.P.A. in francese SOCIÉTÉ DES SERVICES VALLÉE D'AOSTE S.P.A.",
+    "SOCIÉTÉ INFRASTRUCTURES VALDÔTAINES S.R.L.",
+    "STRUTTURA AFFARI DI PREFETTURA DELLA REGIONE AUTONOMA VALLE D'AOSTA",
+    "STRUTTURA VALLE D'AOSTA SRL",
+    "SUB-ATO MONTE EMILIUS PIANA D'AOSTA",
+    "SVAP S.r.l. a S.U.",
+    "UFFICIO REGIONALE DEL TURISMO",
+    "UNIONCAMERE PIEMONTE",
+    "Unité des Communes valdôtaines Evançon",
+    "Unité des Communes valdôtaines Grand-Combin",
+    "Unité des Communes valdôtaines Grand-Paradis",
+    "Unité des Communes valdôtaines Mont-Cervin",
+    "Unité des Communes valdôtaines Mont-Émilius",
+    "Unité des Communes valdôtaines Mont-Rose",
+    "Unité des Communes valdôtaines Valdigne - Mont-Blanc",
+    "Unité des Communes valdôtaines Walser",
+    "UNIVERSITÀ DELLA VALLE D'AOSTA",
+    "V.I.T.A. S.p.A."
+];
 
         // --- LISTA COMPLETA COORDINATE 74 COMUNI VDA ---
         const comuniVdA = {
@@ -685,7 +857,6 @@
         };
 
         // --- SINONIMI PER CATEGORIE ---
-        // Dizionario aggiornato in base al file CSV
         const categorySynonyms = {
             'ict': ['software', 'hardware', 'digitale', 'pc', 'computer', 'server', 'rete', 'web', 'sito', 'app', 'cloud', 'ict', 'telefonia', 'dati', 'digitalizzazione', 'connettività'],
             'generali': ['cancelleria', 'arredi', 'pulizia', 'logistica', 'archivio', 'postali', 'copisteria', 'materiali consumo', 'beni', 'amministrativi', 'ufficio'],
@@ -727,21 +898,17 @@
 
         function initTabs() {
             tabsContainer.innerHTML = '';
-            if (currentMode === 'bandi') {
+            if (currentMode === 'attivi' || currentMode === 'scaduti') {
+                // Stessi tab per entrambe le modalità, cambia solo il contenuto
                 tabsContainer.innerHTML = `
-                    <button class="tab-link active" data-view="sintetico">Bandi Attivi</button>
+                    <button class="tab-link active" data-view="sintetico">Vista Sintetica</button>
                     <button class="tab-link" data-view="completo">Vista Completa</button>
-                    <button class="tab-link" data-view="mappa">Mappa Bandi</button>
+                    <button class="tab-link" data-view="mappa">Mappa</button>
                 `;
+                // Default view
                 currentView = 'sintetico';
                 mapWrapper.style.display = 'none';
                 esitoContainer.style.display = 'none';
-            } else {
-                tabsContainer.innerHTML = `
-                    <button class="tab-link active" data-view="esiti-lista">Lista Esiti</button>
-                `;
-                currentView = 'esiti-lista';
-                mapWrapper.style.display = 'none';
             }
             attachTabListeners();
         }
@@ -760,20 +927,17 @@
         }
 
         function updateModeUI() {
-            btnModeBandi.classList.toggle('active', currentMode === 'bandi');
-            btnModeEsiti.classList.toggle('active', currentMode === 'esiti');
+            btnModeAttivi.classList.toggle('active', currentMode === 'attivi');
+            btnModeScaduti.classList.toggle('active', currentMode === 'scaduti');
             
             const cigGroup = document.getElementById('cig-input-group');
-            if (currentMode === 'esiti') {
-                // Nessuna azione specifica su visibilità toggle qui
-            } else {
-                // Nessuna azione specifica su visibilità toggle qui
-            }
-
-            if (currentMode === 'bandi') {
+            
+            // Adatta etichette date
+            if (currentMode === 'attivi') {
                 labelDataDa.textContent = 'Scadenza da';
                 labelDataA.textContent = 'Scadenza a';
             } else {
+                // Per i bandi scaduti (ex esiti), filtriamo per data di pubblicazione
                 labelDataDa.textContent = 'Pubblicazione da';
                 labelDataA.textContent = 'Pubblicazione a';
             }
@@ -788,7 +952,7 @@
         }
 
 
-        // --- COSTRUZIONE URL (Bandi) ---
+        // --- COSTRUZIONE URL (Bandi Attivi e Scaduti) ---
         function buildUrl() {
             const baseUrl = "https://place-vda.aflink.it/portale/rss_new.asp";
             const numResults = numResultsInput.value;
@@ -808,11 +972,11 @@
             let sortField = 'DtScadenzaBandoTecnical';
             let sortOrder = 'asc';
 
-            if (currentMode === 'esiti') {
-                // MODIFICA RICHIESTA DALL'UTENTE: filtro per esiti (bandi scaduti e non esito esplicito)
+            if (currentMode === 'scaduti') {
+                // MODIFICA: Nuova logica per SCADUTI basata su URL utente
                 filterHide = "bScaduto=0 and tipo='Esito'"; 
-                sortField = 'DtPubblicazione'; // Ordinamento coerente con la richiesta
-                sortOrder = 'DESC'; // Ordinamento decrescente per avere i più recenti
+                sortField = 'DtPubblicazione'; 
+                sortOrder = 'DESC'; 
             }
 
             const params = new URLSearchParams({
@@ -832,7 +996,6 @@
             
             // --- MODIFICA LOGICA FILTRI CATEGORIA ---
             // Filtro per Categoria (Contratto)
-            // CORREZIONE: Usare le variabili corrette selectedContractType e selectedMerceologica
             if (selectedContractType) {
                  filters.push(`Contratto LIKE '%${encodeURIComponent(selectedContractType)}%'`);
             }
@@ -846,7 +1009,6 @@
             // --- FINE MODIFICA ---
             
             // --- MODIFICA FILTRI ENTE ---
-            // Riportati a LIKE e rimosso namespace
             if (enteProponente) {
                 filters.push(`EnteProponente LIKE '%${enteProponente.replace(/'/g, "''")}%'`);
             }
@@ -860,7 +1022,7 @@
             
             // Rimosso namespace e CORRETTO
             // Adatta il campo data alla modalità (scadenza per bandi, pubblicazione per esiti)
-            const dateField = currentMode === 'bandi' ? 'DtScadenzaBandoTecnical' : 'DtPubblicazione';
+            const dateField = currentMode === 'attivi' ? 'DtScadenzaBandoTecnical' : 'DtPubblicazione';
             
             if (dataDa) filters.push(`${dateField} >= '${dataDa}T00:00:00'`);
             if (dataA) filters.push(`${dateField} <= '${dataA}T23:59:59'`);
@@ -869,27 +1031,11 @@
             if (filters.length > 0) params.set('Filter', filters.join(' AND '));
             
             // Aggiungo un parametro casuale per evitare la cache del server RSS stesso
-            // Nota: Alcuni server ASP ignorano parametri extra, altri no.
-            // Sicuro aggiungere solo se la query string esiste già.
             // params.set('_', Date.now()); // Meglio farlo nel fetchProxy
             
             return `${baseUrl}?${params.toString()}`;
         }
         
-        // --- COSTRUZIONE URL (Esiti per CIG) ---
-        function buildEsitoUrl(cig) {
-             const baseUrl = "https://place-vda.aflink.it/portale/rss_new.asp";
-             const params = new URLSearchParams({
-                Table: 'DASHBOARD_VIEW_DOCUMENTI_PUBBLICI',
-                // Applichiamo la stessa logica di "Esiti" definita sopra
-                FilterHide: "bScaduto=0 and tipo='Esito'", 
-                ML_KEY: 'TEMPLATE_RSS_DPCM_ML',
-                sort: 'DtScadenzaBandoTecnical',
-                sortorder: 'DESC',
-                Filter: `CIG LIKE '%${encodeURIComponent(cig)}%'` // Filtra per CIG
-            });
-            return `${baseUrl}?${params.toString()}`;
-        }
 
         function formatDate(dateString) {
             if (!dateString || dateString === 'N/D') return 'N/D';
@@ -1025,511 +1171,93 @@
                     
                     return (importoBando >= importoDa) && (importoBando <= importoA);
                 });
-                // --- FINE LOGICA FILTRO ---
 
-
-                 if (!filteredItems || filteredItems.length === 0) { // Modificato: usa filteredItems
-                    feedContainer.innerHTML = "<p style='text-align:center; padding: 20px;'>Nessun elemento trovato per i criteri specificati.</p>";
-                    nextPageBtn.disabled = true;
-                    // Aggiorniamo comunque il contatore (anche se è 0)
-                    resultsStatusContainer.innerHTML = `<p id="results-status">Trovati 0 risultati che corrispondono ai filtri in questa pagina.</p>`;
-                    return;
-                }
-                // Modificato: usa filteredItems
-                // AGGIORNAMENTO QUI: Mostra la fonte del proxy se disponibile
-                let statusHtml = `<p id="results-status">Trovati ${filteredItems.length} risultati che corrispondono ai filtri in questa pagina.`;
-                if (window.currentProxySource) {
-                    // Estrae solo il dominio per pulizia
-                    let domain = '';
-                    try { domain = new URL(window.currentProxySource).hostname; } catch(e) { domain = window.currentProxySource; }
-                    statusHtml += ` <span style="font-size: 0.85em; color: #999; display: block; margin-top: 4px;">Fonte proxy: ${domain}</span>`;
-                }
-                statusHtml += `</p>`;
-                resultsStatusContainer.innerHTML = statusHtml;
-                
-                try {
-                    // Modificato: itera su filteredItems invece di fetchedItems
-                    filteredItems.forEach(item => {
-                        const title = item.querySelector("title")?.textContent || 'N/D';
-                        let linkRaw = item.querySelector("link")?.textContent?.trim() || '#';
-                        linkRaw = linkRaw.replace(/\/\/*portale\//g, '/portalegare/');
-                        const txt = document.createElement("textarea");
-                        txt.innerHTML = linkRaw;
-                        linkRaw = txt.value;
-                        
-                        const cardDiv = document.createElement('div');
-                        cardDiv.className = `feed-item ${currentView === 'sintetico' ? 'synthetic-card' : 'full-card'}`;
-
-                        if (currentView === 'sintetico') {
-                            const data = extractData(item);
-                            cardDiv.innerHTML = `
-                                <div class="synthetic-header">
-                                    <h3 class="synthetic-title">${title}</h3>
-                                    <div class="synthetic-badges">
-                                        ${data.esito ? `<span class="badge badge-esito">${data.esito}</span>` : ''}
-                                        ${data.cig ? `<a href="https://dati.anticorruzione.it/superset/dashboard/dettaglio_cig/?cig=${data.cig}" target="_blank" class="badge badge-cig" title="Vedi su ANAC">CIG: ${data.cig}</a>` : ''}
-                                    </div>
-                                </div>
-                                <div class="synthetic-body">
-                                    <!-- MODIFICA: Mostra entrambi gli enti -->
-                                    <div class="info-group" style="grid-column: 1 / -1;">
-                                        <span class="info-label">Ente Proponente</span>
-                                        <span class="info-value ente">${data.enteProponente}</span>
-                                    </div>
-                                    <div class="info-group" style="grid-column: 1 / -1;">
-                                        <span class="info-label">Ente Appaltante</span>
-                                        <span class="info-value ente">${data.enteAppaltante}</span>
-                                    </div>
-                                    <div class="info-group" style="grid-column: 1 / -1;">
-                                        <span class="info-label">Oggetto del Bando</span>
-                                        <span class="info-value oggetto">${formatOggetto(data.oggetto)}</span>
-                                    </div>
-                                    <div class="info-group">
-                                        <span class="info-label">Base d'Asta</span>
-                                        <span class="info-value importo">${data.baseAsta}</span>
-                                    </div>
-                                    <div class="info-group">
-                                        <span class="info-label">Scadenza Bando</span>
-                                        <span class="info-value scadenza">${formatDate(data.scadenza)}</span>
-                                    </div>
-                                     <div class="info-group">
-                                        <span class="info-label">Tipologia</span>
-                                        <span class="info-value">${data.contratto}</span>
-                                    </div>
-                                </div>
-                                <div class="synthetic-footer">
-                                    <a href="${linkRaw}" target="_blank" rel="noopener noreferrer" class="btn-details">Vedi Dettagli Gara &rarr;</a>
-                                </div>
-                            `;
-                        } else {
-                            let dlContent = '';
-                            for (const node of item.children) {
-                                if (node.tagName !== 'title' && node.tagName !== 'link') dlContent += `<dt>${node.tagName}</dt><dd>${node.textContent}</dd>`;
-                            }
-                            cardDiv.innerHTML = `<h2><a href="${linkRaw}" target="_blank">${title}</a></h2><dl>${dlContent}</dl>`;
-                        }
-                        feedContainer.appendChild(cardDiv);
-                    });
-                } catch (error) { console.error("Errore visualizzazione:", error); }
+            if (!filteredItems || filteredItems.length === 0) {
+                feedContainer.innerHTML = "<p style='text-align:center; padding: 20px;'>Nessun elemento trovato per i criteri specificati.</p>";
+                nextPageBtn.disabled = true;
+                // Aggiorniamo comunque il contatore (anche se è 0)
+                resultsStatusContainer.innerHTML = `<p id="results-status">Trovati 0 risultati che corrispondono ai filtri in questa pagina.</p>`;
+                return;
             }
-        }
-
-        function extractData(itemXml) {
-            const getSafe = (tagCandidates) => {
-                if (!Array.isArray(tagCandidates)) tagCandidates = [tagCandidates];
-                for (const tag of tagCandidates) {
-                    const node = Array.from(itemXml.children).find(n => 
-                        n.tagName === tag || n.tagName.toLowerCase() === tag.toLowerCase() || 
-                        n.nodeName === tag || n.nodeName.toLowerCase() === tag.toLowerCase()
-                    );
-                    if (node && node.textContent) return node.textContent.trim();
-                }
-                return null;
-            };
+            // Modificato: usa filteredItems
+            // AGGIORNAMENTO QUI: Mostra la fonte del proxy se disponibile
+            let statusHtml = `<p id="results-status">Trovati ${filteredItems.length} risultati che corrispondono ai filtri in questa pagina.`;
+            if (window.currentProxySource) {
+                // Estrae solo il dominio per pulizia
+                let domain = '';
+                try { domain = new URL(window.currentProxySource).hostname; } catch(e) { domain = window.currentProxySource; }
+                statusHtml += ` <span style="font-size: 0.85em; color: #999; display: block; margin-top: 4px;">Fonte proxy: ${domain}</span>`;
+            }
+            statusHtml += `</p>`;
+            resultsStatusContainer.innerHTML = statusHtml;
             
-            // Estrae entrambi i campi
-            const enteProponente = getSafe(['afs:EnteProponente', 'ente', 'amministrazione']);
-            const enteAppaltante = getSafe(['afs:DenominazioneEnte', 'denominazioneente']);
-
-            return {
-                esito: getSafe(['esito', 'stato']),
-                cig: getSafe(['afs:CIG', 'CIG', 'cig']),
-                enteProponente: enteProponente || 'N/D',
-                enteAppaltante: enteAppaltante || 'N/D', 
-                ente_raw: enteProponente, // Per la logica della mappa
-                oggetto: getSafe(['afs:Oggetto', 'description', 'oggetto', 'titolo']),
-                baseAsta: getSafe(['afs:a_base_asta', 'importo', 'basedasta']) || 'N/D',
-                contratto: getSafe(['afs:Contratto', 'tipologia', 'contratto']) || 'N/D',
-                scadenza: getSafe(['afs:DtScadenzaBandoTecnical', 'afs:dtscadenza', 'dtscadenza', 'scadenza']) || 'N/D',
-                pubblicazione: getSafe(['dtpubblicazione', 'afs:DtPubblicazione', 'pubDate']) || 'N/D'
-            };
-        }
-
-        // --- FUNZIONE DI FETCH GENERICA (riutilizzata da entrambi) ---
-        async function fetchProxy(url) {
-            const ts = Date.now();
-            const TIMEOUT_MS = 30000; 
-            
-            // Lista di proxy ORDINATA per affidabilità:
-            // 1. api.codetabs.com: Attualmente il più stabile per questo feed
-            // 2. corsproxy.io: Buona alternativa
-            // 3. allorigins.win: Molto affidabile, ma richiede parsing JSON
-            // 4. thingproxy: Spesso funziona se gli altri falliscono
-            // 5. cors.eu.org: Lento ma spesso aperto
-            const proxies = [
-                { url: `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`, type: 'text'},
-                { url: `https://corsproxy.io/?${encodeURIComponent(url)}`, type: 'text' },
-                { url: `https://api.allorigins.win/get?url=${encodeURIComponent(url)}&_t=${ts}`, type: 'json' },
-                { url: `https://thingproxy.freeboard.io/fetch/${url}`, type: 'text' },
-                { url: `https://cors.eu.org/${url}`, type: 'text' }
-            ];
-            
-            // Mix casulae dei proxy secondari (dal secondo in poi)
-            const primary = proxies[0];
-            const others = proxies.slice(1).sort(() => Math.random() - 0.5);
-            const shuffledProxies = [primary, ...others];
-
-            for (const proxy of shuffledProxies) {
-                try {
-                    const controller = new AbortController();
-                    const id = setTimeout(() => controller.abort(), TIMEOUT_MS);
+            try {
+                // Modificato: itera su filteredItems invece di fetchedItems
+                filteredItems.forEach(item => {
+                    const title = item.querySelector("title")?.textContent || 'N/D';
+                    let linkRaw = item.querySelector("link")?.textContent?.trim() || '#';
+                    linkRaw = linkRaw.replace(/\/\/*portale\//g, '/portalegare/');
+                    const txt = document.createElement("textarea");
+                    txt.innerHTML = linkRaw;
+                    linkRaw = txt.value;
                     
-                    // Usa cache: 'no-cache' o 'reload' per forzare dati freschi
-                    const res = await fetch(proxy.url, { 
-                        signal: controller.signal, 
-                        cache: 'no-cache' 
-                    });
-                    clearTimeout(id);
-                    
-                    // Gestione specifica per alcuni proxy che potrebbero chiedere azioni manuali (es. cors-anywhere)
-                    if (res.status === 403 || res.status === 429) {
-                         console.warn(`Proxy ${proxy.url} bloccato/limitato (${res.status})`);
-                         continue;
-                    }
+                    const cardDiv = document.createElement('div');
+                    cardDiv.className = `feed-item ${currentView === 'sintetico' ? 'synthetic-card' : 'full-card'}`;
 
-                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-                    
-                    let xmlStr;
-                    if (proxy.type === 'json') {
-                        const json = await res.json();
-                        xmlStr = json.contents;
+                    if (currentView === 'sintetico') {
+                        const data = extractData(item);
+                        const dateLabel = currentMode === 'attivi' ? 'Scadenza' : 'Pubblicazione';
+                        const dateValue = currentMode === 'attivi' ? formatDate(data.scadenza) : formatDate(data.pubblicazione);
+
+                        cardDiv.innerHTML = `
+                            <div class="synthetic-header">
+                                <h3 class="synthetic-title">${title}</h3>
+                                <div class="synthetic-badges">
+                                    ${data.esito ? `<span class="badge badge-esito">${data.esito}</span>` : ''}
+                                    ${data.cig ? `<a href="https://dati.anticorruzione.it/superset/dashboard/dettaglio_cig/?cig=${data.cig}" target="_blank" class="badge badge-cig" title="Vedi su ANAC">CIG: ${data.cig}</a>` : ''}
+                                </div>
+                            </div>
+                            <div class="synthetic-body">
+                                <!-- MODIFICA: Mostra entrambi gli enti -->
+                                <div class="info-group" style="grid-column: 1 / -1;">
+                                    <span class="info-label">Ente Proponente</span>
+                                    <span class="info-value ente">${data.enteProponente}</span>
+                                </div>
+                                <div class="info-group" style="grid-column: 1 / -1;">
+                                    <span class="info-label">Ente Appaltante</span>
+                                    <span class="info-value ente">${data.enteAppaltante}</span>
+                                </div>
+                                <div class="info-group" style="grid-column: 1 / -1;">
+                                    <span class="info-label">Oggetto del Bando</span>
+                                    <span class="info-value oggetto">${formatOggetto(data.oggetto)}</span>
+                                </div>
+                                <div class="info-group">
+                                    <span class="info-label">Base d'Asta</span>
+                                    <span class="info-value importo">${data.baseAsta}</span>
+                                </div>
+                                <div class="info-group">
+                                    <span class="info-label">${dateLabel}</span>
+                                    <span class="info-value scadenza">${dateValue}</span>
+                                </div>
+                                 <div class="info-group">
+                                    <span class="info-label">Tipologia</span>
+                                    <span class="info-value">${data.contratto}</span>
+                                </div>
+                            </div>
+                            <div class="synthetic-footer">
+                                <a href="${linkRaw}" target="_blank" rel="noopener noreferrer" class="btn-details">Vedi Dettagli Gara &rarr;</a>
+                            </div>
+                        `;
                     } else {
-                        xmlStr = await res.text();
-                    }
-
-                    if (!xmlStr || xmlStr.trim().length < 50 || (!xmlStr.includes('<rss') && !xmlStr.includes('<feed') && !xmlStr.startsWith('<?xml'))) {
-                         throw new Error("Risposta invalida o non XML");
-                    }
-                    
-                    const xmlDoc = new DOMParser().parseFromString(xmlStr, "application/xml");
-                    if (xmlDoc.querySelector("parsererror")) throw new Error("XML non valido");
-                    
-                    return { doc: xmlDoc, source: proxy.url }; // Successo! Restituisce anche la fonte
-
-                } catch (e) { console.warn(`Proxy fallito: ${proxy.url}`, e); }
-            }
-            throw new Error("Tutti i proxy falliti");
-        }
-
-
-        // --- COSTRUZIONE URL (Bandi) ---
-        function buildUrl() {
-            const baseUrl = "https://place-vda.aflink.it/portale/rss_new.asp";
-            const numResults = numResultsInput.value;
-            const cig = document.getElementById('cig-input').value.trim();
-            let oggetto = document.getElementById('oggetto-input').value.trim();
-            // Legge dai nuovi menu a tendina
-            const enteProponente = enteProponenteSelect.value;
-            const enteAppaltante = enteAppaltanteSelect.value;
-            // --- INIZIO NUOVE AGGIUNTE ---
-            const importoDa = document.getElementById('importo-da-input').value;
-            const importoA = document.getElementById('importo-a-input').value;
-            const dataDa = document.getElementById('data-da-input').value;
-            const dataA = document.getElementById('data-a-input').value;
-            // --- FINE NUOVE AGGIUNTE ---
-
-            let filterHide = "bScaduto=0 and tipo<>'Esito'";
-            let sortField = 'DtScadenzaBandoTecnical';
-            let sortOrder = 'asc';
-
-            if (currentMode === 'esiti') {
-                // MODIFICA RICHIESTA DALL'UTENTE: filtro per esiti (bandi scaduti e non esito esplicito)
-                filterHide = "bScaduto=0 and tipo='Esito'"; 
-                sortField = 'DtPubblicazione'; // Ordinamento coerente con la richiesta
-                sortOrder = 'DESC'; // Ordinamento decrescente per avere i più recenti
-            }
-
-            const params = new URLSearchParams({
-                Table: 'DASHBOARD_VIEW_DOCUMENTI_PUBBLICI',
-                FilterHide: filterHide,
-                ML_KEY: 'TEMPLATE_RSS_DPCM_ML',
-                sort: sortField,
-                sortorder: sortOrder,
-                numRowForPag: numResults,
-                nPag: currentPage
-            });
-
-            const filters = [];
-            // --- REVISIONE DI TUTTI I FILTRI (rimozione namespace 'afs:') ---
-            if (cig) filters.push(`CIG LIKE '%${encodeURIComponent(cig)}%'`);
-            if (oggetto) filters.push(`Oggetto LIKE '%${encodeURIComponent(oggetto)}%'`); 
-            
-            // --- MODIFICA LOGICA FILTRI CATEGORIA ---
-            // Filtro per Categoria (Contratto)
-            // CORREZIONE: Usare le variabili corrette selectedContractType e selectedMerceologica
-            if (selectedContractType) {
-                 filters.push(`Contratto LIKE '%${encodeURIComponent(selectedContractType)}%'`);
-            }
-            // Filtro per Categoria Merceologica (Oggetto)
-            if (selectedMerceologica) {
-                const catLower = selectedMerceologica.toLowerCase();
-                const synonyms = categorySynonyms[catLower] || [catLower];
-                const orQuery = synonyms.map(word => `Oggetto LIKE '%${encodeURIComponent(word)}%'`).join(' OR ');
-                filters.push(`(${orQuery})`);
-            }
-            // --- FINE MODIFICA ---
-            
-            // --- MODIFICA FILTRI ENTE ---
-            // Riportati a LIKE e rimosso namespace
-            if (enteProponente) {
-                filters.push(`EnteProponente LIKE '%${enteProponente.replace(/'/g, "''")}%'`);
-            }
-            if (enteAppaltante) {
-                filters.push(`DenominazioneEnte LIKE '%${enteAppaltante.replace(/'/g, "''")}%'`);
-            }
-            // --- FINE MODIFICA ---
-            
-            // --- INIZIO NUOVE AGGIUNTE FILTRI RANGE ---
-            // RIMOSSI i filtri importo da qui. Saranno gestiti lato client.
-            
-            // Rimosso namespace e CORRETTO
-            // Adatta il campo data alla modalità (scadenza per bandi, pubblicazione per esiti)
-            const dateField = currentMode === 'bandi' ? 'DtScadenzaBandoTecnical' : 'DtPubblicazione';
-            
-            if (dataDa) filters.push(`${dateField} >= '${dataDa}T00:00:00'`);
-            if (dataA) filters.push(`${dateField} <= '${dataA}T23:59:59'`);
-            // --- FINE MODIFICA ---
-
-            if (filters.length > 0) params.set('Filter', filters.join(' AND '));
-            
-            // Aggiungo un parametro casuale per evitare la cache del server RSS stesso
-            // Nota: Alcuni server ASP ignorano parametri extra, altri no.
-            // Sicuro aggiungere solo se la query string esiste già.
-            // params.set('_', Date.now()); // Meglio farlo nel fetchProxy
-            
-            return `${baseUrl}?${params.toString()}`;
-        }
-        
-        // --- COSTRUZIONE URL (Esiti per CIG) ---
-        function buildEsitoUrl(cig) {
-             const baseUrl = "https://place-vda.aflink.it/portale/rss_new.asp";
-             const params = new URLSearchParams({
-                Table: 'DASHBOARD_VIEW_DOCUMENTI_PUBBLICI',
-                // Applichiamo la stessa logica di "Esiti" definita sopra
-                FilterHide: "bScaduto=0 and tipo='Esito'", 
-                ML_KEY: 'TEMPLATE_RSS_DPCM_ML',
-                sort: 'DtScadenzaBandoTecnical',
-                sortorder: 'DESC',
-                Filter: `CIG LIKE '%${encodeURIComponent(cig)}%'` // Filtra per CIG
-            });
-            return `${baseUrl}?${params.toString()}`;
-        }
-
-        function formatDate(dateString) {
-            if (!dateString || dateString === 'N/D') return 'N/D';
-            try {
-                const date = new Date(dateString);
-                if (isNaN(date.getTime())) return dateString;
-                const day = String(date.getDate()).padStart(2, '0');
-                const month = String(date.getMonth() + 1).padStart(2, '0');
-                const year = date.getFullYear();
-                const hours = String(date.getHours()).padStart(2, '0');
-                const minutes = String(date.getMinutes()).padStart(2, '0');
-                return `${day}/${month}/${year} ore ${hours}:${minutes}`;
-            } catch (e) { return dateString; }
-        }
-
-        function formatOggetto(text) {
-            if (!text) return 'Descrizione non disponibile';
-            return text.replace(/\s*(Scadenza:)/gi, '<br><strong style="color:#dc3545;">$1</strong>');
-        }
-
-        // --- NUOVA FUNZIONE HELPER PER PARSARE GLI IMPORTI ---
-        function parseImporto(importoStr) {
-            if (!importoStr || importoStr === 'N/D') return null;
-            try {
-                // Rimuove i punti (migliaia), sostituisce la virgola (decimali) con un punto, poi converte in numero
-                return parseFloat(importoStr.replace(/\./g, '').replace(',', '.'));
-            } catch (e) {
-                console.warn(`Impossibile parsare l'importo: ${importoStr}`, e);
-                return null;
-            }
-        }
-
-        // --- FUNZIONE PER INIZIALIZZARE E AGGIORNARE LA MAPPA ---
-        function updateMap() {
-            if (!map) {
-                // Inizializza la mappa se non esiste ancora
-                map = L.map('map-container').setView([45.737, 7.320], 10); // Centra su Aosta
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    maxZoom: 18,
-                    attribution: '© OpenStreetMap'
-                }).addTo(map);
-                // Usa un MarkerClusterGroup invece di un LayerGroup standard
-                markersLayer = L.markerClusterGroup({
-                    showCoverageOnHover: false, // Disattiva l'area blu al passaggio del mouse sui cluster
-                    maxClusterRadius: 50 // Raggio di raggruppamento (più basso = meno raggruppamento)
-                }).addTo(map);
-            }
-
-            markersLayer.clearLayers(); // Pulisci i vecchi marker
-
-            fetchedItems.forEach(item => {
-                const data = extractData(item);
-                // Usa il dato grezzo per la mappa
-                const enteNormalized = data.ente_raw ? data.ente_raw.toLowerCase()
-                    .replace('communauté de montagne', 'unite des communes valdotaines')
-                    .replace("unite' des communes valdotaines", 'unite des communes valdotaines') : "";
-                
-                let coords = null;
-                // Cerca corrispondenza esatta o parziale nel dizionario
-                for (const key in comuniVdA) {
-                    if (enteNormalized.includes(key)) {
-                        coords = comuniVdA[key];
-                        if (enteNormalized === key) break;
-                    }
-                }
-
-                if (coords) {
-                     // --- CORREZIONE LINK E DATI POPUP ---
-                    let linkRaw = item.querySelector("link")?.textContent?.trim() || '#';
-                    linkRaw = linkRaw.replace(/\/\/*portale\//g, '/portalegare/');
-                    const txt = document.createElement("textarea");
-                    txt.innerHTML = linkRaw;
-                    linkRaw = txt.value;
-
-                    const title = item.querySelector("title")?.textContent || 'Bando';
-                    let shortOggetto = data.oggetto.length > 100 ? data.oggetto.substring(0, 100) + '...' : data.oggetto;
-
-                    const popupContent = `
-                        <div style="max-width: 250px;">
-                            <b>${title}</b><br>
-                            <small style="color: #666;">${data.enteProponente}</small><br>
-                            <p style="margin: 8px 0;">${shortOggetto}</p>
-                            <span style="color: #dc3545; font-size: 0.9em;">Scadenza: ${formatDate(data.scadenza)}</span><br>
-                            <a href="${linkRaw}" target="_blank">Vedi dettagli gara &rarr;</a>
-                        </div>
-                    `;
-                    
-                    // Aggiungi il marker al Cluster Group invece che direttamente alla mappa
-                    markersLayer.addLayer(L.marker(coords).bindPopup(popupContent));
-                }
-            });
-        }
-        
-        // --- FUNZIONE DI VISUALIZZAZIONE PRINCIPALE ---
-        function displayItems() {
-            // Gestione visibilità dei container in base alla view corrente
-            if (currentView === 'mappa') {
-                feedContainer.style.display = 'none';
-                esitoContainer.style.display = 'none';
-                mapWrapper.style.display = 'block';
-                mapContainer.classList.add('active');
-                // Timeout necessario per far renderizzare correttamente la mappa quando diventa visibile
-                setTimeout(() => { 
-                    if (map) map.invalidateSize(); 
-                }, 300); 
-            } else if (currentView === 'cerca-esito') {
-                feedContainer.style.display = 'none';
-                mapWrapper.style.display = 'none';
-                esitoContainer.style.display = 'block';
-            } else { // Viste 'sintetico' o 'completo'
-                feedContainer.style.display = 'block';
-                mapWrapper.style.display = 'none';
-                esitoContainer.style.display = 'none';
-            }
-
-            // Popola solo se la vista non è mappa e non è cerca-esito
-            if (currentView === 'sintetico' || currentView === 'completo') {
-                 feedContainer.innerHTML = '';
-
-                 // --- NUOVA LOGICA DI FILTRO LATO CLIENT PER IMPORTO ---
-                const importoDa = parseFloat(document.getElementById('importo-da-input').value) || 0;
-                const importoA = parseFloat(document.getElementById('importo-a-input').value) || Infinity;
-                
-                const filteredItems = fetchedItems.filter(item => {
-                    const data = extractData(item);
-                    const importoBando = parseImporto(data.baseAsta);
-
-                    // Se l'importo non è parsabile (es. 'N/D'), lo escludiamo dal filtro range
-                    if (importoBando === null) {
-                        // Se l'utente non ha messo filtri (0 e Infinity), mostriamo anche N/D
-                        return importoDa === 0 && importoA === Infinity;
-                    }
-                    
-                    return (importoBando >= importoDa) && (importoBando <= importoA);
-                });
-                // --- FINE LOGICA FILTRO ---
-
-
-                 if (!filteredItems || filteredItems.length === 0) { // Modificato: usa filteredItems
-                    feedContainer.innerHTML = "<p style='text-align:center; padding: 20px;'>Nessun elemento trovato per i criteri specificati.</p>";
-                    nextPageBtn.disabled = true;
-                    // Aggiorniamo comunque il contatore (anche se è 0)
-                    resultsStatusContainer.innerHTML = `<p id="results-status">Trovati 0 risultati che corrispondono ai filtri in questa pagina.</p>`;
-                    return;
-                }
-                // Modificato: usa filteredItems
-                // AGGIORNAMENTO QUI: Mostra la fonte del proxy se disponibile
-                let statusHtml = `<p id="results-status">Trovati ${filteredItems.length} risultati che corrispondono ai filtri in questa pagina.`;
-                
-                statusHtml += `</p>`;
-                resultsStatusContainer.innerHTML = statusHtml;
-                
-                try {
-                    // Modificato: itera su filteredItems invece di fetchedItems
-                    filteredItems.forEach(item => {
-                        const title = item.querySelector("title")?.textContent || 'N/D';
-                        let linkRaw = item.querySelector("link")?.textContent?.trim() || '#';
-                        linkRaw = linkRaw.replace(/\/\/*portale\//g, '/portalegare/');
-                        const txt = document.createElement("textarea");
-                        txt.innerHTML = linkRaw;
-                        linkRaw = txt.value;
-                        
-                        const cardDiv = document.createElement('div');
-                        cardDiv.className = `feed-item ${currentView === 'sintetico' ? 'synthetic-card' : 'full-card'}`;
-
-                        if (currentView === 'sintetico') {
-                            const data = extractData(item);
-                            cardDiv.innerHTML = `
-                                <div class="synthetic-header">
-                                    <h3 class="synthetic-title">${title}</h3>
-                                    <div class="synthetic-badges">
-                                        ${data.esito ? `<span class="badge badge-esito">${data.esito}</span>` : ''}
-                                        ${data.cig ? `<a href="https://dati.anticorruzione.it/superset/dashboard/dettaglio_cig/?cig=${data.cig}" target="_blank" class="badge badge-cig" title="Vedi su ANAC">CIG: ${data.cig}</a>` : ''}
-                                    </div>
-                                </div>
-                                <div class="synthetic-body">
-                                    <!-- MODIFICA: Mostra entrambi gli enti -->
-                                    <div class="info-group" style="grid-column: 1 / -1;">
-                                        <span class="info-label">Ente Proponente</span>
-                                        <span class="info-value ente">${data.enteProponente}</span>
-                                    </div>
-                                    <div class="info-group" style="grid-column: 1 / -1;">
-                                        <span class="info-label">Ente Appaltante</span>
-                                        <span class="info-value ente">${data.enteAppaltante}</span>
-                                    </div>
-                                    <div class="info-group" style="grid-column: 1 / -1;">
-                                        <span class="info-label">Oggetto del Bando</span>
-                                        <span class="info-value oggetto">${formatOggetto(data.oggetto)}</span>
-                                    </div>
-                                    <div class="info-group">
-                                        <span class="info-label">Base d'Asta</span>
-                                        <span class="info-value importo">${data.baseAsta}</span>
-                                    </div>
-                                    <div class="info-group">
-                                        <span class="info-label">Scadenza Bando</span>
-                                        <span class="info-value scadenza">${formatDate(data.scadenza)}</span>
-                                    </div>
-                                     <div class="info-group">
-                                        <span class="info-label">Tipologia</span>
-                                        <span class="info-value">${data.contratto}</span>
-                                    </div>
-                                </div>
-                                <div class="synthetic-footer">
-                                    <a href="${linkRaw}" target="_blank" rel="noopener noreferrer" class="btn-details">Vedi Dettagli Gara &rarr;</a>
-                                </div>
-                            `;
-                        } else {
-                            let dlContent = '';
-                            for (const node of item.children) {
-                                if (node.tagName !== 'title' && node.tagName !== 'link') dlContent += `<dt>${node.tagName}</dt><dd>${node.textContent}</dd>`;
-                            }
-                            cardDiv.innerHTML = `<h2><a href="${linkRaw}" target="_blank">${title}</a></h2><dl>${dlContent}</dl>`;
+                        let dlContent = '';
+                        for (const node of item.children) {
+                            if (node.tagName !== 'title' && node.tagName !== 'link') dlContent += `<dt>${node.tagName}</dt><dd>${node.textContent}</dd>`;
                         }
-                        feedContainer.appendChild(cardDiv);
-                    });
-                } catch (error) { console.error("Errore visualizzazione:", error); }
+                        cardDiv.innerHTML = `<h2><a href="${linkRaw}" target="_blank">${title}</a></h2><dl>${dlContent}</dl>`;
+                    }
+                    feedContainer.appendChild(cardDiv);
+                });
+            } catch (error) { console.error("Errore visualizzazione:", error); }
             }
         }
 
@@ -1576,431 +1304,7 @@
             // 4. thingproxy: Spesso funziona se gli altri falliscono
             // 5. cors.eu.org: Lento ma spesso aperto
             const proxies = [
-                { url: `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`, type: 'text'},
-                { url: `https://corsproxy.io/?${encodeURIComponent(url)}`, type: 'text' },
-                { url: `https://api.allorigins.win/get?url=${encodeURIComponent(url)}&_t=${ts}`, type: 'json' },
-                { url: `https://thingproxy.freeboard.io/fetch/${url}`, type: 'text' },
-                { url: `https://cors.eu.org/${url}`, type: 'text' }
-            ];
-            
-            // Mix casulae dei proxy secondari (dal secondo in poi)
-            const primary = proxies[0];
-            const others = proxies.slice(1).sort(() => Math.random() - 0.5);
-            const shuffledProxies = [primary, ...others];
-
-            for (const proxy of shuffledProxies) {
-                try {
-                    const controller = new AbortController();
-                    const id = setTimeout(() => controller.abort(), TIMEOUT_MS);
-                    
-                    // Usa cache: 'no-cache' o 'reload' per forzare dati freschi
-                    const res = await fetch(proxy.url, { 
-                        signal: controller.signal, 
-                        cache: 'no-cache' 
-                    });
-                    clearTimeout(id);
-                    
-                    // Gestione specifica per alcuni proxy che potrebbero chiedere azioni manuali (es. cors-anywhere)
-                    if (res.status === 403 || res.status === 429) {
-                         console.warn(`Proxy ${proxy.url} bloccato/limitato (${res.status})`);
-                         continue;
-                    }
-
-                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-                    
-                    let xmlStr;
-                    if (proxy.type === 'json') {
-                        const json = await res.json();
-                        xmlStr = json.contents;
-                    } else {
-                        xmlStr = await res.text();
-                    }
-
-                    if (!xmlStr || xmlStr.trim().length < 50 || (!xmlStr.includes('<rss') && !xmlStr.includes('<feed') && !xmlStr.startsWith('<?xml'))) {
-                         throw new Error("Risposta invalida o non XML");
-                    }
-                    
-                    const xmlDoc = new DOMParser().parseFromString(xmlStr, "application/xml");
-                    if (xmlDoc.querySelector("parsererror")) throw new Error("XML non valido");
-                    
-                    return { doc: xmlDoc, source: proxy.url }; // Successo! Restituisce anche la fonte
-
-                } catch (e) { console.warn(`Proxy fallito: ${proxy.url}`, e); }
-            }
-            throw new Error("Tutti i proxy falliti");
-        }
-
-
-        // --- COSTRUZIONE URL (Bandi) ---
-        function buildUrl() {
-            const baseUrl = "https://place-vda.aflink.it/portale/rss_new.asp";
-            const numResults = numResultsInput.value;
-            const cig = document.getElementById('cig-input').value.trim();
-            let oggetto = document.getElementById('oggetto-input').value.trim();
-            // Legge dai nuovi menu a tendina
-            const enteProponente = enteProponenteSelect.value;
-            const enteAppaltante = enteAppaltanteSelect.value;
-            // --- INIZIO NUOVE AGGIUNTE ---
-            const importoDa = document.getElementById('importo-da-input').value;
-            const importoA = document.getElementById('importo-a-input').value;
-            const dataDa = document.getElementById('data-da-input').value;
-            const dataA = document.getElementById('data-a-input').value;
-            // --- FINE NUOVE AGGIUNTE ---
-
-            let filterHide = "bScaduto=0 and tipo<>'Esito'";
-            let sortField = 'DtScadenzaBandoTecnical';
-            let sortOrder = 'asc';
-
-            if (currentMode === 'esiti') {
-                // MODIFICA RICHIESTA DALL'UTENTE: filtro per esiti (bandi scaduti e non esito esplicito)
-                filterHide = "bScaduto=0 and tipo='Esito'"; 
-                sortField = 'DtPubblicazione'; // Ordinamento coerente con la richiesta
-                sortOrder = 'DESC'; // Ordinamento decrescente per avere i più recenti
-            }
-
-            const params = new URLSearchParams({
-                Table: 'DASHBOARD_VIEW_DOCUMENTI_PUBBLICI',
-                FilterHide: filterHide,
-                ML_KEY: 'TEMPLATE_RSS_DPCM_ML',
-                sort: sortField,
-                sortorder: sortOrder,
-                numRowForPag: numResults,
-                nPag: currentPage
-            });
-
-            const filters = [];
-            // --- REVISIONE DI TUTTI I FILTRI (rimozione namespace 'afs:') ---
-            if (cig) filters.push(`CIG LIKE '%${encodeURIComponent(cig)}%'`);
-            if (oggetto) filters.push(`Oggetto LIKE '%${encodeURIComponent(oggetto)}%'`); 
-            
-            // --- MODIFICA LOGICA FILTRI CATEGORIA ---
-            // Filtro per Categoria (Contratto)
-            // CORREZIONE: Usare le variabili corrette selectedContractType e selectedMerceologica
-            if (selectedContractType) {
-                 filters.push(`Contratto LIKE '%${encodeURIComponent(selectedContractType)}%'`);
-            }
-            // Filtro per Categoria Merceologica (Oggetto)
-            if (selectedMerceologica) {
-                const catLower = selectedMerceologica.toLowerCase();
-                const synonyms = categorySynonyms[catLower] || [catLower];
-                const orQuery = synonyms.map(word => `Oggetto LIKE '%${encodeURIComponent(word)}%'`).join(' OR ');
-                filters.push(`(${orQuery})`);
-            }
-            // --- FINE MODIFICA ---
-            
-            // --- MODIFICA FILTRI ENTE ---
-            // Riportati a LIKE e rimosso namespace
-            if (enteProponente) {
-                filters.push(`EnteProponente LIKE '%${enteProponente.replace(/'/g, "''")}%'`);
-            }
-            if (enteAppaltante) {
-                filters.push(`DenominazioneEnte LIKE '%${enteAppaltante.replace(/'/g, "''")}%'`);
-            }
-            // --- FINE MODIFICA ---
-            
-            // --- INIZIO NUOVE AGGIUNTE FILTRI RANGE ---
-            // RIMOSSI i filtri importo da qui. Saranno gestiti lato client.
-            
-            // Rimosso namespace e CORRETTO
-            // Adatta il campo data alla modalità (scadenza per bandi, pubblicazione per esiti)
-            const dateField = currentMode === 'bandi' ? 'DtScadenzaBandoTecnical' : 'DtPubblicazione';
-            
-            if (dataDa) filters.push(`${dateField} >= '${dataDa}T00:00:00'`);
-            if (dataA) filters.push(`${dateField} <= '${dataA}T23:59:59'`);
-            // --- FINE MODIFICA ---
-
-            if (filters.length > 0) params.set('Filter', filters.join(' AND '));
-            
-            // Aggiungo un parametro casuale per evitare la cache del server RSS stesso
-            // Nota: Alcuni server ASP ignorano parametri extra, altri no.
-            // Sicuro aggiungere solo se la query string esiste già.
-            // params.set('_', Date.now()); // Meglio farlo nel fetchProxy
-            
-            return `${baseUrl}?${params.toString()}`;
-        }
-        
-        // --- COSTRUZIONE URL (Esiti per CIG) ---
-        function buildEsitoUrl(cig) {
-             const baseUrl = "https://place-vda.aflink.it/portale/rss_new.asp";
-             const params = new URLSearchParams({
-                Table: 'DASHBOARD_VIEW_DOCUMENTI_PUBBLICI',
-                // Applichiamo la stessa logica di "Esiti" definita sopra
-                FilterHide: "bScaduto=0 and tipo='Esito'", 
-                ML_KEY: 'TEMPLATE_RSS_DPCM_ML',
-                sort: 'DtScadenzaBandoTecnical',
-                sortorder: 'DESC',
-                Filter: `CIG LIKE '%${encodeURIComponent(cig)}%'` // Filtra per CIG
-            });
-            return `${baseUrl}?${params.toString()}`;
-        }
-
-        function formatDate(dateString) {
-            if (!dateString || dateString === 'N/D') return 'N/D';
-            try {
-                const date = new Date(dateString);
-                if (isNaN(date.getTime())) return dateString;
-                const day = String(date.getDate()).padStart(2, '0');
-                const month = String(date.getMonth() + 1).padStart(2, '0');
-                const year = date.getFullYear();
-                const hours = String(date.getHours()).padStart(2, '0');
-                const minutes = String(date.getMinutes()).padStart(2, '0');
-                return `${day}/${month}/${year} ore ${hours}:${minutes}`;
-            } catch (e) { return dateString; }
-        }
-
-        function formatOggetto(text) {
-            if (!text) return 'Descrizione non disponibile';
-            return text.replace(/\s*(Scadenza:)/gi, '<br><strong style="color:#dc3545;">$1</strong>');
-        }
-
-        // --- NUOVA FUNZIONE HELPER PER PARSARE GLI IMPORTI ---
-        function parseImporto(importoStr) {
-            if (!importoStr || importoStr === 'N/D') return null;
-            try {
-                // Rimuove i punti (migliaia), sostituisce la virgola (decimali) con un punto, poi converte in numero
-                return parseFloat(importoStr.replace(/\./g, '').replace(',', '.'));
-            } catch (e) {
-                console.warn(`Impossibile parsare l'importo: ${importoStr}`, e);
-                return null;
-            }
-        }
-
-        // --- FUNZIONE PER INIZIALIZZARE E AGGIORNARE LA MAPPA ---
-        function updateMap() {
-            if (!map) {
-                // Inizializza la mappa se non esiste ancora
-                map = L.map('map-container').setView([45.737, 7.320], 10); // Centra su Aosta
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    maxZoom: 18,
-                    attribution: '© OpenStreetMap'
-                }).addTo(map);
-                // Usa un MarkerClusterGroup invece di un LayerGroup standard
-                markersLayer = L.markerClusterGroup({
-                    showCoverageOnHover: false, // Disattiva l'area blu al passaggio del mouse sui cluster
-                    maxClusterRadius: 50 // Raggio di raggruppamento (più basso = meno raggruppamento)
-                }).addTo(map);
-            }
-
-            markersLayer.clearLayers(); // Pulisci i vecchi marker
-
-            fetchedItems.forEach(item => {
-                const data = extractData(item);
-                // Usa il dato grezzo per la mappa
-                const enteNormalized = data.ente_raw ? data.ente_raw.toLowerCase()
-                    .replace('communauté de montagne', 'unite des communes valdotaines')
-                    .replace("unite' des communes valdotaines", 'unite des communes valdotaines') : "";
-                
-                let coords = null;
-                // Cerca corrispondenza esatta o parziale nel dizionario
-                for (const key in comuniVdA) {
-                    if (enteNormalized.includes(key)) {
-                        coords = comuniVdA[key];
-                        if (enteNormalized === key) break;
-                    }
-                }
-
-                if (coords) {
-                     // --- CORREZIONE LINK E DATI POPUP ---
-                    let linkRaw = item.querySelector("link")?.textContent?.trim() || '#';
-                    linkRaw = linkRaw.replace(/\/\/*portale\//g, '/portalegare/');
-                    const txt = document.createElement("textarea");
-                    txt.innerHTML = linkRaw;
-                    linkRaw = txt.value;
-
-                    const title = item.querySelector("title")?.textContent || 'Bando';
-                    let shortOggetto = data.oggetto.length > 100 ? data.oggetto.substring(0, 100) + '...' : data.oggetto;
-
-                    const popupContent = `
-                        <div style="max-width: 250px;">
-                            <b>${title}</b><br>
-                            <small style="color: #666;">${data.enteProponente}</small><br>
-                            <p style="margin: 8px 0;">${shortOggetto}</p>
-                            <span style="color: #dc3545; font-size: 0.9em;">Scadenza: ${formatDate(data.scadenza)}</span><br>
-                            <a href="${linkRaw}" target="_blank">Vedi dettagli gara &rarr;</a>
-                        </div>
-                    `;
-                    
-                    // Aggiungi il marker al Cluster Group invece che direttamente alla mappa
-                    markersLayer.addLayer(L.marker(coords).bindPopup(popupContent));
-                }
-            });
-        }
-        
-        // --- FUNZIONE DI VISUALIZZAZIONE PRINCIPALE ---
-        function displayItems() {
-            // Gestione visibilità dei container in base alla view corrente
-            if (currentView === 'mappa') {
-                feedContainer.style.display = 'none';
-                esitoContainer.style.display = 'none';
-                mapWrapper.style.display = 'block';
-                mapContainer.classList.add('active');
-                // Timeout necessario per far renderizzare correttamente la mappa quando diventa visibile
-                setTimeout(() => { 
-                    if (map) map.invalidateSize(); 
-                }, 300); 
-            } else if (currentView === 'cerca-esito') {
-                feedContainer.style.display = 'none';
-                mapWrapper.style.display = 'none';
-                esitoContainer.style.display = 'block';
-            } else { // Viste 'sintetico' o 'completo'
-                feedContainer.style.display = 'block';
-                mapWrapper.style.display = 'none';
-                esitoContainer.style.display = 'none';
-            }
-
-            // Popola solo se la vista non è mappa e non è cerca-esito
-            if (currentView === 'sintetico' || currentView === 'completo') {
-                 feedContainer.innerHTML = '';
-
-                 // --- NUOVA LOGICA DI FILTRO LATO CLIENT PER IMPORTO ---
-                const importoDa = parseFloat(document.getElementById('importo-da-input').value) || 0;
-                const importoA = parseFloat(document.getElementById('importo-a-input').value) || Infinity;
-                
-                const filteredItems = fetchedItems.filter(item => {
-                    const data = extractData(item);
-                    const importoBando = parseImporto(data.baseAsta);
-
-                    // Se l'importo non è parsabile (es. 'N/D'), lo escludiamo dal filtro range
-                    if (importoBando === null) {
-                        // Se l'utente non ha messo filtri (0 e Infinity), mostriamo anche N/D
-                        return importoDa === 0 && importoA === Infinity;
-                    }
-                    
-                    return (importoBando >= importoDa) && (importoBando <= importoA);
-                });
-                // --- FINE LOGICA FILTRO ---
-
-
-                 if (!filteredItems || filteredItems.length === 0) { // Modificato: usa filteredItems
-                    feedContainer.innerHTML = "<p style='text-align:center; padding: 20px;'>Nessun elemento trovato per i criteri specificati.</p>";
-                    nextPageBtn.disabled = true;
-                    // Aggiorniamo comunque il contatore (anche se è 0)
-                    resultsStatusContainer.innerHTML = `<p id="results-status">Trovati 0 risultati che corrispondono ai filtri in questa pagina.</p>`;
-                    return;
-                }
-                // Modificato: usa filteredItems
-                // AGGIORNAMENTO QUI: Mostra la fonte del proxy se disponibile
-                let statusHtml = `<p id="results-status">Trovati ${filteredItems.length} risultati che corrispondono ai filtri in questa pagina.`;
-                if (window.currentProxySource) {
-                    // Estrae solo il dominio per pulizia
-                    let domain = '';
-                    try { domain = new URL(window.currentProxySource).hostname; } catch(e) { domain = window.currentProxySource; }
-                    statusHtml += ` <span style="font-size: 0.85em; color: #999; display: block; margin-top: 4px;">Fonte proxy: ${domain}</span>`;
-                }
-                statusHtml += `</p>`;
-                resultsStatusContainer.innerHTML = statusHtml;
-                
-                try {
-                    // Modificato: itera su filteredItems invece di fetchedItems
-                    filteredItems.forEach(item => {
-                        const title = item.querySelector("title")?.textContent || 'N/D';
-                        let linkRaw = item.querySelector("link")?.textContent?.trim() || '#';
-                        linkRaw = linkRaw.replace(/\/\/*portale\//g, '/portalegare/');
-                        const txt = document.createElement("textarea");
-                        txt.innerHTML = linkRaw;
-                        linkRaw = txt.value;
-                        
-                        const cardDiv = document.createElement('div');
-                        cardDiv.className = `feed-item ${currentView === 'sintetico' ? 'synthetic-card' : 'full-card'}`;
-
-                        if (currentView === 'sintetico') {
-                            const data = extractData(item);
-                            cardDiv.innerHTML = `
-                                <div class="synthetic-header">
-                                    <h3 class="synthetic-title">${title}</h3>
-                                    <div class="synthetic-badges">
-                                        ${data.esito ? `<span class="badge badge-esito">${data.esito}</span>` : ''}
-                                        ${data.cig ? `<a href="https://dati.anticorruzione.it/superset/dashboard/dettaglio_cig/?cig=${data.cig}" target="_blank" class="badge badge-cig" title="Vedi su ANAC">CIG: ${data.cig}</a>` : ''}
-                                    </div>
-                                </div>
-                                <div class="synthetic-body">
-                                    <!-- MODIFICA: Mostra entrambi gli enti -->
-                                    <div class="info-group" style="grid-column: 1 / -1;">
-                                        <span class="info-label">Ente Proponente</span>
-                                        <span class="info-value ente">${data.enteProponente}</span>
-                                    </div>
-                                    <div class="info-group" style="grid-column: 1 / -1;">
-                                        <span class="info-label">Ente Appaltante</span>
-                                        <span class="info-value ente">${data.enteAppaltante}</span>
-                                    </div>
-                                    <div class="info-group" style="grid-column: 1 / -1;">
-                                        <span class="info-label">Oggetto del Bando</span>
-                                        <span class="info-value oggetto">${formatOggetto(data.oggetto)}</span>
-                                    </div>
-                                    <div class="info-group">
-                                        <span class="info-label">Base d'Asta</span>
-                                        <span class="info-value importo">${data.baseAsta}</span>
-                                    </div>
-                                    <div class="info-group">
-                                        <span class="info-label">Scadenza Bando</span>
-                                        <span class="info-value scadenza">${formatDate(data.scadenza)}</span>
-                                    </div>
-                                     <div class="info-group">
-                                        <span class="info-label">Tipologia</span>
-                                        <span class="info-value">${data.contratto}</span>
-                                    </div>
-                                </div>
-                                <div class="synthetic-footer">
-                                    <a href="${linkRaw}" target="_blank" rel="noopener noreferrer" class="btn-details">Vedi Dettagli Gara &rarr;</a>
-                                </div>
-                            `;
-                        } else {
-                            let dlContent = '';
-                            for (const node of item.children) {
-                                if (node.tagName !== 'title' && node.tagName !== 'link') dlContent += `<dt>${node.tagName}</dt><dd>${node.textContent}</dd>`;
-                            }
-                            cardDiv.innerHTML = `<h2><a href="${linkRaw}" target="_blank">${title}</a></h2><dl>${dlContent}</dl>`;
-                        }
-                        feedContainer.appendChild(cardDiv);
-                    });
-                } catch (error) { console.error("Errore visualizzazione:", error); }
-            }
-        }
-
-        function extractData(itemXml) {
-            const getSafe = (tagCandidates) => {
-                if (!Array.isArray(tagCandidates)) tagCandidates = [tagCandidates];
-                for (const tag of tagCandidates) {
-                    const node = Array.from(itemXml.children).find(n => 
-                        n.tagName === tag || n.tagName.toLowerCase() === tag.toLowerCase() || 
-                        n.nodeName === tag || n.nodeName.toLowerCase() === tag.toLowerCase()
-                    );
-                    if (node && node.textContent) return node.textContent.trim();
-                }
-                return null;
-            };
-            
-            // Estrae entrambi i campi
-            const enteProponente = getSafe(['afs:EnteProponente', 'ente', 'amministrazione']);
-            const enteAppaltante = getSafe(['afs:DenominazioneEnte', 'denominazioneente']);
-
-            return {
-                esito: getSafe(['esito', 'stato']),
-                cig: getSafe(['afs:CIG', 'CIG', 'cig']),
-                enteProponente: enteProponente || 'N/D',
-                enteAppaltante: enteAppaltante || 'N/D', 
-                ente_raw: enteProponente, // Per la logica della mappa
-                oggetto: getSafe(['afs:Oggetto', 'description', 'oggetto', 'titolo']),
-                baseAsta: getSafe(['afs:a_base_asta', 'importo', 'basedasta']) || 'N/D',
-                contratto: getSafe(['afs:Contratto', 'tipologia', 'contratto']) || 'N/D',
-                scadenza: getSafe(['afs:DtScadenzaBandoTecnical', 'afs:dtscadenza', 'dtscadenza', 'scadenza']) || 'N/D',
-                pubblicazione: getSafe(['dtpubblicazione', 'afs:DtPubblicazione', 'pubDate']) || 'N/D'
-            };
-        }
-
-        // --- FUNZIONE DI FETCH GENERICA (riutilizzata da entrambi) ---
-        async function fetchProxy(url) {
-            const ts = Date.now();
-            const TIMEOUT_MS = 30000; 
-            
-            // Lista di proxy ORDINATA per affidabilità:
-            // 1. api.codetabs.com: Attualmente il più stabile per questo feed
-            // 2. corsproxy.io: Buona alternativa
-            // 3. allorigins.win: Molto affidabile, ma richiede parsing JSON
-            // 4. thingproxy: Spesso funziona se gli altri falliscono
-            // 5. cors.eu.org: Lento ma spesso aperto
-            const proxies = [
-                { url: `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`, type: 'text'},
+                { url: `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}&_t=${ts}`, type: 'text'},
                 { url: `https://corsproxy.io/?${encodeURIComponent(url)}`, type: 'text' },
                 { url: `https://api.allorigins.win/get?url=${encodeURIComponent(url)}&_t=${ts}`, type: 'json' },
                 { url: `https://thingproxy.freeboard.io/fetch/${url}`, type: 'text' },
@@ -2076,7 +1380,7 @@
                 fetchedItems = Array.from(xmlDoc.querySelectorAll("item"));
                 
                 displayItems(); // Qui useremo window.currentProxySource
-                if (currentView === 'mappa' && currentMode === 'bandi') updateMap(); 
+                if (currentView === 'mappa' && currentMode === 'attivi') updateMap(); 
                 
                 mapLoadingOverlay.classList.remove('active');
                 nextPageBtn.disabled = fetchedItems.length < numResultsInput.value;
@@ -2088,70 +1392,10 @@
                 enableFilters(); // <-- RIATTIVA I FILTRI (sia in caso di successo che di errore)
             }
         }
-        
-        // --- FUNZIONE CARICAMENTO ESITI (per tab 4) ---
-        async function fetchEsitoByCig() {
-            const cig = document.getElementById('cig-input').value.trim();
-            if (!cig) {
-                esitoContainer.innerHTML = '<p class="error-message">Devi inserire un CIG per la ricerca.</p>';
-                return;
-            }
-            
-            esitoContainer.innerHTML = `<div class="loading-container"><div class="loading-spinner"></div><div class="loading-text">Ricerca esito per CIG: ${cig}...</div></div>`;
-            resultsStatusContainer.innerHTML = '';
-            paginationControls.style.display = 'none';
-            disableFilters(); // <-- DISABILITA I FILTRI
-            
-            const feedUrl = buildEsitoUrl(cig);
-            try {
-                const result = await fetchProxy(feedUrl); // Ora ritorna un oggetto
-                const xmlDoc = result.doc;
-                updateDebugFooter(result.source); // Aggiorna footer debug
-                // window.currentProxySource = result.source; // Opzionale per gli esiti
-                
-                const esitiItems = Array.from(xmlDoc.querySelectorAll("item"));
-                
-                if (esitiItems.length === 0) {
-                    esitoContainer.innerHTML = `<p style="text-align:center; padding: 20px;">Nessun esito trovato per il CIG: ${cig}</p>`;
-                    return;
-                }
-                
-                let html = '<ul>';
-                esitiItems.forEach(item => {
-                    const title = item.querySelector("title")?.textContent || 'Esito';
-                    const description = item.querySelector("description")?.textContent || 'Dettagli non disponibili';
-                    let linkRaw = item.querySelector("link")?.textContent?.trim() || '#';
-                    linkRaw = linkRaw.replace(/\/\/*portale\//g, '/portalegare/');
-                    const txt = document.createElement("textarea");
-                    txt.innerHTML = linkRaw;
-                    linkRaw = txt.value;
-                    
-                    html += `
-                        <li>
-                            <div class="esito-info">
-                                <strong>${title}</strong>
-                                <p>${description}</p>
-                            </div>
-                            <div class="esito-link">
-                                <a href="${linkRaw}" target="_blank" rel="noopener noreferrer" class="btn-details">Dettaglio</a>
-                            </div>
-                        </li>
-                    `;
-                });
-                html += '</ul>';
-                esitoContainer.innerHTML = html;
-
-            } catch (error) {
-                esitoContainer.innerHTML = `<div class="error-message">Impossibile caricare il feed. I servizi esterni non rispondono.<br><button id="retry-btn-esito">Riprova</button></div>`;
-                document.getElementById('retry-btn-esito').addEventListener('click', fetchEsitoByCig);
-            } finally {
-                enableFilters(); // <-- RIATTIVA I FILTRI (sia in caso di successo che di errore)
-            }
-        }
 
         function handleError(lastError) {
             console.error("Errore caricamento:", lastError);
-            let msg = "Impossibile caricare il feed. I servizi esterni non rispondono.";
+            let msg = "Impossibile caricare i dati. I servizi esterni non rispondono.";
             feedContainer.innerHTML = `<div class="error-message">${msg}<br><button id="retry-btn">Riprova</button></div>`;
             mapLoadingOverlay.classList.remove('active');
             enableFilters(); // <-- RIATTIVA I FILTRI IN CASO DI ERRORE
@@ -2159,67 +1403,26 @@
         }
 
         // --- EVENT LISTENERS ---
-        searchForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            if (currentView === 'cerca-esito') {
-                fetchEsitoByCig();
-            } else {
-                currentPage = 1;
-                fetchFeed();
-            }
-        });
-        
-        // NUOVO LISTENER PER IL RESET
+        searchForm.addEventListener('submit', (e) => { e.preventDefault(); currentPage = 1; fetchFeed(); });
         resetFiltersBtn.addEventListener('click', () => {
-             // Resetta campi di testo
             document.getElementById('cig-input').value = '';
             document.getElementById('oggetto-input').value = '';
-            
-            // Resetta menu a tendina
             enteProponenteSelect.value = '';
             enteAppaltanteSelect.value = '';
-            
-            // Resetta campi range
             document.getElementById('importo-da-input').value = '';
             document.getElementById('importo-a-input').value = '';
             document.getElementById('data-da-input').value = '';
             document.getElementById('data-a-input').value = '';
-
-            // Resetta pillole Categoria
-            contractPills.forEach(p => p.classList.remove('active'));
-            selectedContractType = '';
-
-            // Resetta pillole Merceologiche
-            merceologicaPills.forEach(p => p.classList.remove('active'));
-            selectedMerceologica = '';
-            
-            // Resetta paginazione e risultati
-            numResultsInput.value = '10'; // Resetta al default
+            contractPills.forEach(p => p.classList.remove('active')); selectedContractType = '';
+            merceologicaPills.forEach(p => p.classList.remove('active')); selectedMerceologica = '';
+            numResultsInput.value = '200'; // MODIFICA: Default 200
             currentPage = 1;
-            
-            // Ricarica i dati solo se non siamo nel tab esito
-            if (currentView !== 'cerca-esito') {
-                fetchFeed(); // Questo chiamerà disableFilters()
-            }
+            fetchFeed();
         });
 
         prevPageBtn.addEventListener('click', () => { if (currentPage > 1) { currentPage--; fetchFeed(); } });
         nextPageBtn.addEventListener('click', () => { currentPage++; fetchFeed(); });
         
-        // Tab listeners
-        function attachTabListeners() {
-             const tabs = document.querySelectorAll('.tab-link');
-             tabs.forEach(btn => btn.addEventListener('click', () => {
-                tabs.forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                currentView = btn.dataset.view;
-                if (currentView === 'mappa') {
-                    setTimeout(() => { if (map) map.invalidateSize(); updateMap(); }, 300);
-                }
-                displayItems();
-            }));
-        }
-
         contractPills.forEach(pill => pill.addEventListener('click', () => {
             if (pill.classList.contains('active')) { pill.classList.remove('active'); selectedContractType = ''; }
             else { contractPills.forEach(p => p.classList.remove('active')); pill.classList.add('active'); selectedContractType = pill.dataset.cat; }
@@ -2230,8 +1433,8 @@
             else { merceologicaPills.forEach(p => p.classList.remove('active')); pill.classList.add('active'); selectedMerceologica = pill.dataset.cat; }
         }));
 
-        btnModeBandi.addEventListener('click', () => { if (currentMode !== 'bandi') { currentMode = 'bandi'; currentPage = 1; updateModeUI(); fetchFeed(); } });
-        btnModeEsiti.addEventListener('click', () => { if (currentMode !== 'esiti') { currentMode = 'esiti'; currentPage = 1; updateModeUI(); fetchFeed(); } });
+        btnModeAttivi.addEventListener('click', () => { if (currentMode !== 'attivi') { currentMode = 'attivi'; currentPage = 1; updateModeUI(); fetchFeed(); } });
+        btnModeScaduti.addEventListener('click', () => { if (currentMode !== 'scaduti') { currentMode = 'scaduti'; currentPage = 1; updateModeUI(); fetchFeed(); } });
 
         document.addEventListener("DOMContentLoaded", () => {
              populateEnteSelects(); // Chiamata alla nuova funzione
