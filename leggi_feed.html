@@ -340,6 +340,7 @@
 
         /* --- STILI CARD --- */
         .feed-item {
+            position: relative; /* Necessario per posizionare la coccarda */
             background-color: #fff;
             border: 1px solid var(--border-color);
             border-radius: 10px;
@@ -352,6 +353,47 @@
             transform: translateY(-3px);
             border-color: #d6d8db;
         }
+
+        /* STILI COCCARDA (AWARD BADGE) - VERSIONE RIDOTTA 50% */
+        .award-badge {
+            position: absolute;
+            top: -10px; /* Ridotto offset per badge più piccolo */
+            left: -10px; /* Ridotto offset per badge più piccolo */
+            width: 30px; /* 60px -> 30px */
+            height: 30px; /* 60px -> 30px */
+            background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.25); /* Ombra ridotta */
+            border: 2px solid #fff; /* Bordo ridotto 4px -> 2px */
+            z-index: 20;
+            transform: rotate(-10deg);
+            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes popIn { from { transform: scale(0) rotate(-90deg); } to { transform: scale(1) rotate(-10deg); } }
+        
+        /* Icona ridotta */
+        .award-badge .icon { font-size: 14px; line-height: 1; display: block; text-shadow: 0 1px 1px rgba(0,0,0,0.2); }
+        
+        /* Nastri sotto la coccarda - Ridimensionati */
+        .award-badge::before, .award-badge::after {
+            content: '';
+            position: absolute;
+            bottom: -4px; /* -8px -> -4px */
+            width: 7px; /* 14px -> 7px */
+            height: 12px; /* 25px -> 12px */
+            background: #155724; /* Verde più scuro */
+            z-index: -1;
+            border-radius: 1px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+        }
+        .award-badge::before { left: 4px; transform: rotate(20deg); } /* 8px -> 4px */
+        .award-badge::after { right: 4px; transform: rotate(-20deg); } /* 8px -> 4px */
+
 
         /* Synthetic Card Layout */
         .synthetic-card {
@@ -366,8 +408,9 @@
             border-bottom: 1px solid #eee;
             padding-bottom: 15px;
             margin-bottom: 15px;
+            position: relative; /* Per posizionamenti relativi interni */
         }
-        .synthetic-title { font-size: 1.25rem; color: #2c3e50; margin: 0; font-weight: 700; flex-grow: 1; margin-right: 15px; }
+        .synthetic-title { font-size: 1.25rem; color: #2c3e50; margin: 0; font-weight: 700; flex-grow: 1; margin-right: 15px; transition: padding 0.2s; }
         
         /* MODIFICA: Layout orizzontale per i badge */
         .synthetic-badges { 
@@ -393,8 +436,8 @@
         
         /* NUOVI STILI BADGE */
         .badge-esiti-pubblicazioni { background-color: #17a2b8; color: white; } /* Azzurro/Info */
-        .badge-aggiudicato { background-color: #1e7e34; color: white; } /* Verde scuro */
         .badge-avvisi { background-color: #ffc107; color: #333; } /* Giallo/Warning */
+        /* Rimossa classe badge-aggiudicato non più usata */
         
         .synthetic-body { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; }
         .info-group { display: flex; flex-direction: column; }
@@ -1260,12 +1303,23 @@
                         const showAggiudicato = (data.bConcluso === "1");
                         const showAvvisiChiarimenti = (data.bEsito === "1");
 
+                        // Logica Award Badge (Coccarda) - VERSIONE RIDOTTA 50% SENZA TESTO
+                        let awardBadgeHtml = '';
+                        if (showAggiudicato) {
+                            awardBadgeHtml = `
+                                <div class="award-badge" title="Gara Aggiudicata">
+                                    <span class="icon">🏆</span>
+                                </div>
+                            `;
+                        }
+
                         cardDiv.innerHTML = `
+                            ${awardBadgeHtml}
                             <div class="synthetic-header">
                                 <h3 class="synthetic-title" ${titleTooltipAttr}>${titleHtml}</h3>
                                 <div class="synthetic-badges">
                                     ${showEsitiPubblicazioni ? `<a href="${linkRaw}" target="_blank" class="badge badge-esiti-pubblicazioni">Esiti/Pubblicazioni</a>` : ''}
-                                    ${showAggiudicato ? `<a href="${linkRaw}" target="_blank" class="badge badge-aggiudicato">Aggiudicato</a>` : ''}
+                                    <!-- BADGE AGGIUDICATO RIMOSSO -->
                                     ${showAvvisiChiarimenti ? `<a href="${linkRaw}" target="_blank" class="badge badge-avvisi">Avvisi/Chiarimenti</a>` : ''}
                                     ${data.cig ? `<a href="https://dati.anticorruzione.it/superset/dashboard/dettaglio_cig/?cig=${data.cig}" target="_blank" class="badge badge-cig" title="Vedi su ANAC">CIG: ${data.cig}</a>` : ''}
                                 </div>
