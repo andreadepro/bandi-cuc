@@ -354,13 +354,13 @@
             border-color: #d6d8db;
         }
 
-        /* STILI COCCARDA (AWARD BADGE) - VERSIONE RIDOTTA 50% */
+        /* STILI COCCARDA (AWARD BADGE) - VERSIONE BOLLINO CONCLUSO (Bandiera) */
         .award-badge {
             position: absolute;
-            top: -10px; /* Ridotto offset per badge più piccolo */
-            left: -10px; /* Ridotto offset per badge più piccolo */
-            width: 30px; /* 60px -> 30px */
-            height: 30px; /* 60px -> 30px */
+            top: -10px; 
+            left: -10px; 
+            width: 30px;
+            height: 30px; 
             background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
             color: white;
             border-radius: 50%;
@@ -368,8 +368,8 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.25); /* Ombra ridotta */
-            border: 2px solid #fff; /* Bordo ridotto 4px -> 2px */
+            box-shadow: 0 2px 5px rgba(0,0,0,0.25);
+            border: 2px solid #fff;
             z-index: 20;
             transform: rotate(-10deg);
             animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
@@ -379,20 +379,7 @@
         /* Icona ridotta */
         .award-badge .icon { font-size: 14px; line-height: 1; display: block; text-shadow: 0 1px 1px rgba(0,0,0,0.2); }
         
-        /* Nastri sotto la coccarda - Ridimensionati */
-        .award-badge::before, .award-badge::after {
-            content: '';
-            position: absolute;
-            bottom: -4px; /* -8px -> -4px */
-            width: 7px; /* 14px -> 7px */
-            height: 12px; /* 25px -> 12px */
-            background: #155724; /* Verde più scuro */
-            z-index: -1;
-            border-radius: 1px;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.2);
-        }
-        .award-badge::before { left: 4px; transform: rotate(20deg); } /* 8px -> 4px */
-        .award-badge::after { right: 4px; transform: rotate(-20deg); } /* 8px -> 4px */
+        /* RIMOSSI NASTRI INFERIORI PER PULIZIA E MEANING "CONCLUSO" */
 
 
         /* Synthetic Card Layout */
@@ -1303,12 +1290,12 @@
                         const showAggiudicato = (data.bConcluso === "1");
                         const showAvvisiChiarimenti = (data.bEsito === "1");
 
-                        // Logica Award Badge (Coccarda) - VERSIONE RIDOTTA 50% SENZA TESTO
+                        // Logica Award Badge (Coccarda) - VERSIONE BOLLINO CONCLUSO
                         let awardBadgeHtml = '';
                         if (showAggiudicato) {
                             awardBadgeHtml = `
-                                <div class="award-badge" title="Gara Aggiudicata">
-                                    <span class="icon">🏆</span>
+                                <div class="award-badge" title="Procedura Conclusa">
+                                    <span class="icon">✓</span>
                                 </div>
                             `;
                         }
