@@ -246,6 +246,13 @@
             flex-wrap: wrap;
         }
         
+        /* NUOVO STILE PER GRUPPO PULSANTI */
+        .advanced-footer-buttons {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
         #reset-filters-btn {
             background-color: #fff;
             border: 1px solid var(--danger-color);
@@ -475,6 +482,9 @@
             #esito-container .esito-link { width: 100%; text-align: right; }
             .advanced-footer { flex-direction: column; align-items: stretch; gap: 15px; }
             .advanced-footer .form-group { width: 100% !important; margin-bottom: 0; }
+            /* Adattamento mobile pulsanti */
+            .advanced-footer-buttons { flex-direction: column; width: 100%; }
+            .advanced-footer-buttons button { width: 100%; }
         }
     </style>
 </head>
@@ -580,17 +590,19 @@
                         </div>
                     </div>
 
-                    <!-- Footer Avanzato -->
+                    <!-- Footer Avanzato MODIFICATO -->
                     <div class="advanced-footer">
-                        <div class="advanced-footer-left">
-                             <button type="button" id="reset-filters-btn">Azzera tutti i filtri</button>
-                             <div class="form-group" id="num-results-group" style="width: 120px; margin-bottom: 0;">
-                                <label for="num-results-input" style="margin-bottom: 2px;">Risultati/pag.</label>
-                                <input type="number" id="num-results-input" value="200" min="1" max="1000"> <!-- MODIFICA: Default 200 -->
-                            </div>
+                        <!-- Sinistra: Risultati per pagina -->
+                         <div class="form-group" id="num-results-group" style="width: 120px; margin-bottom: 0;">
+                            <label for="num-results-input" style="margin-bottom: 2px;">Risultati/pag.</label>
+                            <input type="number" id="num-results-input" value="200" min="1" max="1000">
                         </div>
-                        <!-- Pulsante Applica duplicato per comodità -->
-                        <button type="submit" class="btn-search btn-apply-bottom">Applica Filtri</button>
+
+                        <!-- Destra: Pulsanti vicini -->
+                        <div class="advanced-footer-buttons">
+                             <button type="button" id="reset-filters-btn">Azzera filtri</button>
+                             <button type="submit" class="btn-search btn-apply-bottom">Applica Filtri</button>
+                        </div>
                     </div>
                 </div>
             </fieldset>
@@ -1202,15 +1214,8 @@
                 return;
             }
             // Modificato: usa filteredItems
-            // AGGIORNAMENTO QUI: Mostra la fonte del proxy se disponibile
-            let statusHtml = `<p id="results-status">Trovati ${filteredItems.length} risultati che corrispondono ai filtri in questa pagina.`;
-            if (window.currentProxySource) {
-                // Estrae solo il dominio per pulizia
-                let domain = '';
-                try { domain = new URL(window.currentProxySource).hostname; } catch(e) { domain = window.currentProxySource; }
-                statusHtml += ` <span style="font-size: 0.85em; color: #999; display: block; margin-top: 4px;">Fonte proxy: ${domain}</span>`;
-            }
-            statusHtml += `</p>`;
+            // Rimosso display duplicato della fonte proxy qui. Rimane solo nel footer.
+            let statusHtml = `<p id="results-status">Trovati ${filteredItems.length} risultati che corrispondono ai filtri in questa pagina.</p>`;
             resultsStatusContainer.innerHTML = statusHtml;
             
             try {
